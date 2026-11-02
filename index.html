@@ -13,7 +13,7 @@
 :root{
   --bg:#0F1012; --surface:#1B1C1F; --raised:#26272B; --line:#2F3034; --line-strong:#45464B;
   --fg:#F2F2F0; --muted:#A3A4A8; --faint:#6B6C71;
-  --rec:#FF5A4E; --ok:#7BD88F;
+  --rec:#FF5A4E; --ok:#7BD88F; --warn:#F0B45A;
   --sans:'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono:'IBM Plex Mono', ui-monospace, 'Roboto Mono', monospace;
   color-scheme: dark;
@@ -132,6 +132,24 @@ textarea,.field{width:100%;padding:12px 14px;border-radius:10px;border:1px solid
 .mini{width:40px;height:44px;flex:none;border-radius:8px;border:1px solid var(--line);background:transparent;display:flex;align-items:center;justify-content:center}
 .mini[disabled]{opacity:.35}
 .note{font-size:12px;color:var(--muted);line-height:1.45}
+.card{margin-top:14px;padding:14px 16px;border-radius:12px;background:var(--surface);display:flex;flex-direction:column;gap:10px}
+.card p{margin:0}
+.copyrow{display:flex;align-items:center;gap:8px}
+.copyrow code{flex:1;min-width:0;font-family:var(--mono);font-size:12px;word-break:break-all;user-select:text;-webkit-user-select:text}
+.linkbtn{border:none;background:none;padding:0;color:var(--fg);text-decoration:underline;font-size:12px;min-height:32px}
+.chipon{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.sprow{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.sprow input[type=checkbox]{width:22px;height:22px;margin:10px 0 0;flex:none;accent-color:var(--fg)}
+.sprow.off .sptitle{color:var(--faint);text-decoration:line-through}
+.sptitle{width:100%;min-height:40px;padding:6px 8px;margin-left:-8px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--fg);font-family:inherit;font-size:16px;font-weight:500}
+.sptitle:focus{border-color:var(--line-strong);background:var(--bg);outline:none}
+.sps{font-size:12px;color:var(--muted);line-height:1.4}
+.sps a{color:inherit}
+.sps.found{color:var(--ok)}.sps.check{color:var(--warn)}.sps.miss{color:var(--rec)}
+.spfoot{padding:12px 20px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.spfoot .spstatus{margin:0;min-height:1em}.spfoot .spstatus:empty{display:none}.spstatus.err{color:var(--rec)}
+a.wide{text-decoration:none;color:inherit}a.wide.solid{color:var(--bg)}
+.wide[disabled]{opacity:.55}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -139,6 +157,7 @@ textarea,.field{width:100%;padding:12px 14px;border-radius:10px;border:1px solid
 <div class="app" id="app"></div>
 <div id="layer"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+<script src="spotify.js"></script>
 <script>
 'use strict';
 /* ---------- song data (setlist.fm, pulled Nov 2 2026) ---------- */
@@ -278,7 +297,7 @@ function capture(){
   if (navigator.vibrate) navigator.vibrate(30);
 }
 function addManual(title, editId){
-  if (editId) { const it = S.show.items.find(i=>i.id===editId); if (it){ it.title = title; it.manual = true; it.picked = true; } }
+  if (editId) { const it = S.show.items.find(i=>i.id===editId); if (it){ if (it.title !== title) it.sp = undefined; it.title = title; it.manual = true; it.picked = true; } }
   else S.show.items.push({ id: uid(), ts: Date.now(), actId: act().id, pos: nextPos(), title, manual: true, note: '', voiceId: null, clipId: null });
   S.sheet = null; save(); render();
 }
@@ -327,7 +346,7 @@ function setlistText(){
 /* ---------- render ---------- */
 const app = document.getElementById('app'), layer = document.getElementById('layer');
 function render(){
-  if (S.view === 'capture') renderCapture(); else if (S.view === 'setlist') renderSetlist();
+  if (S.view === 'capture') renderCapture(); else if (S.view === 'setlist') renderSetlist(); else if (S.view === 'spotify') renderSpotify();
   renderLayer();
 }
 function stepperHTML(){
@@ -414,7 +433,8 @@ function renderSetlist(){
       <h3>For setlist.fm</h3>
       <div class="box" id="sltext">${esc(setlistText())}</div>
       <div class="actions">
-        <button class="wide solid" data-a="copy">Copy setlist</button>
+        <button class="wide solid" data-a="toSpotify">${s.sp && s.sp.playlist ? 'Spotify playlist' : 'Send to Spotify'}</button>
+        <button class="wide" data-a="copy">Copy setlist</button>
         <button class="wide" data-a="exportClips">Save clips + show file</button>
         <p class="note">Clips stay on this phone until you clear the browser’s site data. Save them once you’re home so they can be matched later.</p>
         <button class="wide" data-a="askReset" style="margin-top:12px;color:var(--muted)">Clear all captures and start over</button>
@@ -641,10 +661,22 @@ document.addEventListener('click', async e => {
     case 'moveUp': case 'moveDown': {
       const same = orderedItems().filter(i=>i.actId===it.actId); const k = same.indexOf(it), j = a==='moveUp'?k-1:k+1;
       if (j>=0 && j<same.length){ const o = same[j]; [it.pos, o.pos] = [o.pos, it.pos]; save(); render(); } break; }
-    case 'setAct': if (it){ it.actId = el.dataset.act; save(); render(); } break;
+    case 'setAct': if (it){ if (it.actId !== el.dataset.act) it.sp = undefined; it.actId = el.dataset.act; save(); render(); } break;
     case 'remove': S.sheet = null; removeItem(id); break;
     case 'copy': { const txt = setlistText(); try { await navigator.clipboard.writeText(txt); toast('Setlist copied. Paste it into setlist.fm.'); } catch(_){ const r = document.createRange(); r.selectNodeContents(document.getElementById('sltext')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast('Text selected. Use your phone’s Copy.'); } break; }
     case 'exportClips': exportClips(); break;
+    case 'toSpotify': S.view = 'spotify'; S.spStatus = ''; S.spError = false; render(); break;
+    case 'copyUri': { try { await navigator.clipboard.writeText(SPOT.redirectUri()); toast('Redirect URI copied.'); } catch(_){ toast('Press and hold the address to copy it.'); } break; }
+    case 'saveCid': { const v = (document.getElementById('cid')?.value || '').trim(); if (!/^[a-f0-9]{32}$/i.test(v)) { S.spError = true; S.spStatus = 'That doesn’t look like a Client ID. It’s 32 letters and numbers from your app’s settings.'; render(); break; } SPOT.setClientId(v); S.spError = false; S.spStatus = ''; render(); break; }
+    case 'spChangeCid': SPOT.setClientId(''); SPOT.disconnect(); render(); break;
+    case 'spConnect': spEnsureConnected(null).catch(spFail); break;
+    case 'spDisconnect': SPOT.disconnect(); S.spStatus = ''; render(); break;
+    case 'spAct': { const c = spCfg(), aid = el.dataset.act; c.offActs = c.offActs.includes(aid) ? c.offActs.filter(x=>x!==aid) : [...c.offActs, aid]; save(); render(); break; }
+    case 'spPref': { const c = spCfg(); c.preferOriginal = el.checked; s.items.forEach(i => { if (SPOT.splitCover(i.title || '').coverOf) i.sp = undefined; }); save(); render(); break; }
+    case 'spToggle': if (it){ it.spOff = !el.checked; S.spStatus = ''; save(); render(); } break;
+    case 'spMatch': spMatch(); break;
+    case 'spCreate': spCreate(); break;
+    case 'spUpdate': spUpdate(); break;
     case 'askReset': S.sheet = {type:'reset'}; renderLayer(); break;
     case 'doReset': { for (const i of s.items){ if (i.clipId) DB.del('clips', i.clipId).catch(()=>{}); if (i.voiceId) DB.del('clips', i.voiceId).catch(()=>{}); }
       s.items = []; s.actIdx = 0; s.ended = false; S.sheet = null; S.view = 'capture'; save(); render(); toast('Cleared. Ready for the show.'); break; }
@@ -656,6 +688,148 @@ document.addEventListener('input', e => { if (e.target.id === 'q' && S.sheet) { 
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet && !voice) { S.sheet = null; renderLayer(); } });
 window.addEventListener('pagehide', () => { saveNow().catch(()=>{}); });
 
+
+/* ---------- Send to Spotify ---------- */
+const longDate = d => new Date(d+'T12:00').toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+function spCfg(){ const s = S.show; s.sp = s.sp || { name: '', offActs: [], preferOriginal: false, playlist: null }; return s.sp; }
+function spDefaultName(){ const s = S.show, head = s.acts[s.acts.length-1]; return `${head ? head.name : 'Live'} at ${s.venue}, ${s.city} (${longDate(s.date)})`; }
+function spSongs(){ // songs that would go to Spotify, in setlist order
+  const c = spCfg();
+  return orderedItems().filter(i => i.title && !c.offActs.includes(i.actId));
+}
+function spIncluded(){ return spSongs().filter(i => !i.spOff); }
+function spQuery(it){ const { title, coverOf } = SPOT.splitCover(it.title); return { title, coverOf, artist: actById(it.actId)?.name || '' }; }
+function spUris(){ return spIncluded().filter(i => i.sp && i.sp.uri).map(i => i.sp.uri); }
+function spPhase(){
+  const c = spCfg(), inc = spIncluded();
+  if (S.spBusy) return 'busy';
+  if (inc.some(i => i.sp === undefined)) return 'match';
+  if (!c.playlist) return 'create';
+  return spUris().join() === (c.playlist.uris || []).join() ? 'done' : 'update';
+}
+function spRowStatus(it){
+  if (S.spMatching && S.spMatching.has(it.id)) return `<span class="sps">Matching…</span>`;
+  if (it.sp === undefined) return `<span class="sps">Not matched yet</span>`;
+  if (it.sp === null) return `<span class="sps miss">Not found on Spotify. Fix the title, then match again.</span>`;
+  const link = `<a href="${esc(it.sp.url)}" target="_blank" rel="noopener">${esc(it.sp.name)} · ${esc(it.sp.artists)}</a>`;
+  return it.sp.confident ? `<span class="sps found">${link}</span>` : `<span class="sps check">Check this match: ${link}</span>`;
+}
+function renderSpotify(){
+  const s = S.show, c = spCfg(), songs = spSongs(), inc = spIncluded();
+  const scroller = app.querySelector('.sl'); const keepScroll = scroller ? scroller.scrollTop : 0;
+  const unnamed = orderedItems().filter(i => !i.title && !c.offActs.includes(i.actId)).length;
+  const hasCover = songs.some(i => SPOT.splitCover(i.title).coverOf);
+  const found = inc.filter(i => i.sp && i.sp.uri).length, unsure = inc.filter(i => i.sp && i.sp.uri && !i.sp.confident).length, miss = inc.filter(i => i.sp === null).length;
+  let conn;
+  if (!SPOT.clientId()) conn = `<div class="card">
+      <strong>Connect your Spotify app (one time)</strong>
+      <p class="note">In the Spotify developer dashboard, open your app and add this exact Redirect URI:</p>
+      <div class="copyrow"><code id="ruri">${esc(SPOT.redirectUri())}</code><button class="chip" data-a="copyUri">Copy</button></div>
+      <p class="note">Then paste the app’s Client ID here:</p>
+      <input class="field" id="cid" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Client ID" aria-label="Spotify Client ID">
+      <button class="wide solid" data-a="saveCid">Save Client ID</button>
+    </div>`;
+  else if (!SPOT.isConnected()) conn = `<div class="card"><button class="wide solid" data-a="spConnect">Connect Spotify</button>
+      <p class="note">You’ll sign in on Spotify, then come straight back here. <button class="linkbtn" data-a="spChangeCid">Change Client ID</button></p></div>`;
+  else conn = `<p class="note">Spotify connected · <button class="linkbtn" data-a="spDisconnect">Disconnect</button></p>`;
+  const rows = s.acts.filter(a => !c.offActs.includes(a.id)).map(a => {
+    const list = songs.filter(i => i.actId === a.id); if (!list.length) return '';
+    return `<h3>${esc(a.name)}</h3>` + list.map(it => `<div class="sprow${it.spOff?' off':''}" data-id="${it.id}">
+      <input type="checkbox" id="inc-${it.id}" data-a="spToggle" data-id="${it.id}" ${it.spOff?'':'checked'} aria-label="Include ${esc(it.title)}">
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+        <input class="sptitle" id="t-${it.id}" data-id="${it.id}" value="${esc(it.title)}" aria-label="Song title" autocomplete="off" spellcheck="false">
+        ${it.spOff ? '<span class="sps">Left out</span>' : spRowStatus(it)}
+      </div></div>`).join('');
+  }).join('');
+  const phase = spPhase(), n = spUris().length;
+  let primary = '';
+  if (phase === 'busy') primary = `<button class="wide solid" disabled>${esc(S.spBusy)}</button>`;
+  else if (phase === 'match') { const k = inc.filter(i => i.sp === undefined).length; primary = `<button class="wide solid" data-a="spMatch">Match ${k} song${k===1?'':'s'} on Spotify</button>`; }
+  else if (phase === 'create') primary = `<button class="wide solid" data-a="spCreate" ${n?'':'disabled'}>Create private playlist with ${n} song${n===1?'':'s'}</button>`;
+  else if (phase === 'update') primary = `<button class="wide solid" data-a="spUpdate">Update the Spotify playlist (${n} songs)</button>
+      <a class="wide" href="${esc(c.playlist.url)}" target="_blank" rel="noopener">Open in Spotify</a>`;
+  else primary = `<a class="wide solid" href="${esc(c.playlist.url)}" target="_blank" rel="noopener">Open in Spotify</a>`;
+  let status = S.spStatus || '';
+  if (!status && inc.some(i => i.sp !== undefined)) {
+    const parts = [`Found ${found} of ${inc.length}.`];
+    if (unsure) parts.push(`${unsure} in amber need a quick check.`);
+    if (miss) parts.push(`${miss} not found will be left out.`);
+    if (c.playlist) parts.push(phase === 'update' ? 'You changed songs since the playlist was made.' : 'Playlist is up to date.');
+    status = parts.join(' ');
+  }
+  app.innerHTML = `<div class="view">
+    <div class="top"><button class="tbtn" data-a="toSetlist">${I.back} Setlist</button><span></span></div>
+    <div class="sl">
+      <h1>Send to Spotify</h1>
+      ${conn}
+      <label class="eyebrow" for="plname" style="display:block;margin-top:18px">Playlist name</label>
+      <input class="field" id="plname" style="margin-top:6px" value="${esc(c.name || spDefaultName())}" autocomplete="off">
+      <div class="eyebrow" style="margin-top:16px">Acts to include</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">${s.acts.filter(a => orderedItems().some(i=>i.actId===a.id && i.title)).map(a => { const on = !c.offActs.includes(a.id), k = orderedItems().filter(i=>i.actId===a.id && i.title).length;
+        return `<button class="chip${on?' chipon':''}" style="min-height:44px" data-a="spAct" data-act="${a.id}" aria-pressed="${on}">${esc(a.name)} · ${k}</button>`; }).join('')}</div>
+      ${hasCover ? `<label class="note" style="display:flex;gap:10px;align-items:center;margin-top:14px;min-height:44px"><input type="checkbox" id="preforig" data-a="spPref" ${c.preferOriginal?'checked':''} style="width:20px;height:20px"> Use the original artist’s version of covers</label>` : ''}
+      ${rows || '<p class="note" style="margin-top:20px">No named songs yet. Name your songs on the setlist first.</p>'}
+      ${unnamed ? `<p class="note" style="margin-top:14px">${unnamed} unnamed song${unnamed===1?' is':'s are'} left out. Name ${unnamed===1?'it':'them'} on the setlist to include ${unnamed===1?'it':'them'}.</p>` : ''}
+    </div>
+    <div class="spfoot"><p class="note spstatus${S.spError?' err':''}" role="status">${esc(status)}</p>${primary}</div>
+  </div>`;
+  const sc = app.querySelector('.sl'); if (sc) sc.scrollTop = keepScroll;
+}
+function spRerender(){ if (S.view === 'spotify') renderSpotify(); }
+function spFail(e){
+  S.spBusy = null; S.spMatching = null; S.spError = true; S.spStatus = e.message || String(e);
+  if (e.code === 'not_connected') SPOT.disconnect();
+  spRerender();
+}
+async function spEnsureConnected(resume){
+  if (!SPOT.clientId()) { S.spError = true; S.spStatus = 'Add your Spotify Client ID first.'; spRerender(); return false; }
+  if (!SPOT.isConnected()) { await saveNow().catch(()=>{}); await SPOT.login(resume); return false; }
+  return true;
+}
+async function spMatch(){
+  if (!(await spEnsureConnected('match'))) return;
+  const c = spCfg(), todo = spIncluded().filter(i => i.sp === undefined);
+  if (!todo.length) return;
+  S.spError = false; S.spStatus = ''; S.spMatching = new Set(todo.map(i => i.id));
+  let done = 0, idx = 0; S.spBusy = `Matching 0 of ${todo.length}…`; spRerender();
+  const worker = async () => {
+    while (idx < todo.length) {
+      const it = todo[idx++];
+      const r = await SPOT.findTrack(spQuery(it), c.preferOriginal);
+      it.sp = r.track ? { uri: r.track.uri, name: r.track.name, artists: r.track.artists.map(a => a.name).join(', '), url: r.track.external_urls?.spotify || 'https://open.spotify.com/track/' + r.track.id, confident: r.confident } : null;
+      S.spMatching.delete(it.id); done++; S.spBusy = `Matching ${done} of ${todo.length}…`; save(); spRerender();
+    }
+  };
+  try { await Promise.all([worker(), worker(), worker()]); S.spBusy = null; S.spMatching = null; save(); spRerender(); }
+  catch (e) { spFail(e); }
+}
+async function spCreate(){
+  if (!(await spEnsureConnected('create'))) return;
+  const c = spCfg(), uris = spUris();
+  if (!uris.length) return;
+  const name = (document.getElementById('plname')?.value || '').trim() || c.name || spDefaultName();
+  S.spError = false; S.spStatus = ''; S.spBusy = 'Creating playlist…'; spRerender();
+  try {
+    const pl = await SPOT.createPlaylist({ name, description: `Setlist from ${S.show.venue}, ${S.show.city}, ${longDate(S.show.date)}. Made with Setlist Catcher.`, uris });
+    c.playlist = { id: pl.id, url: pl.url, uris, created: Date.now() }; c.name = name;
+    S.spBusy = null; S.spStatus = `Created a private playlist with ${uris.length} songs.`; save(); spRerender();
+  } catch (e) { spFail(e); }
+}
+async function spUpdate(){
+  if (!(await spEnsureConnected('update'))) return;
+  const c = spCfg(), uris = spUris();
+  S.spError = false; S.spStatus = ''; S.spBusy = 'Updating playlist…'; spRerender();
+  try { await SPOT.replaceItems(c.playlist.id, uris); c.playlist.uris = uris; S.spBusy = null; S.spStatus = `Updated. The playlist now has ${uris.length} songs.`; save(); spRerender(); }
+  catch (e) { spFail(e); }
+}
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.classList && t.classList.contains('sptitle')) {
+    const it = S.show.items.find(i => i.id === t.dataset.id); const v = t.value.trim();
+    if (it && v && v !== it.title) { it.title = v; it.sp = undefined; S.spStatus = ''; save(); spRerender(); }
+  } else if (t.id === 'plname') { spCfg().name = t.value.trim(); save(); }
+});
+
 /* ---------- boot ---------- */
 (async function boot(){
   try { S.show = await DB.get('kv','show'); } catch(e){ S.show = null; }
@@ -663,7 +837,10 @@ window.addEventListener('pagehide', () => { saveNow().catch(()=>{}); });
   // A clip that was recording when the app closed can't be finished.
   S.show.items.forEach(i => { if (i.recording) { i.recording = false; if (!i.clipId) i.clipErr = 'Recording cut off'; } });
   if (S.show.ended) S.view = 'setlist';
+  const hm = location.hash.match(/^#spotify(?:-(\w+))?$/);
+  if (hm) { S.view = 'spotify'; history.replaceState(null, '', location.pathname); }
   render(); wake();
+  if (hm && hm[1] === 'match') spMatch(); else if (hm && hm[1] === 'create') spCreate(); else if (hm && hm[1] === 'update') spUpdate();
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
 })();
