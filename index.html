@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0F1012">
+<title>Setlist Catcher</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one dark, one-handed screen. Act stepper on top, timeline in the middle, the capture button docked under the thumb. */
+:root{
+  --bg:#0F1012; --surface:#1B1C1F; --raised:#26272B; --line:#2F3034; --line-strong:#45464B;
+  --fg:#F2F2F0; --muted:#A3A4A8; --faint:#6B6C71;
+  --rec:#FF5A4E; --ok:#7BD88F;
+  --sans:'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono:'IBM Plex Mono', ui-monospace, 'Roboto Mono', monospace;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:16px;-webkit-tap-highlight-color:transparent;overscroll-behavior:none;user-select:none;-webkit-user-select:none}
+input,textarea{user-select:text;-webkit-user-select:text}
+button{font-family:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+[hidden]{display:none!important}
+.app{height:100%;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.view{flex:1;min-height:0;display:flex;flex-direction:column}
+.mono{font-family:var(--mono)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px 0}
+.tbtn{min-height:44px;padding:0 10px;border:none;background:transparent;font-size:15px;font-weight:500;display:flex;align-items:center;gap:6px;border-radius:10px}
+.tbtn:active{background:var(--surface)}
+.where{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;line-height:1.3}
+
+/* act stepper */
+.stepper{padding:10px 20px 0;display:flex;flex-direction:column;gap:10px}
+.steprow{display:flex;align-items:center;gap:8px}
+.nav{width:44px;height:56px;flex:none;border:none;background:transparent;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.nav[disabled]{color:#4A4B50;cursor:default}
+.act{flex:1;min-width:0;min-height:56px;border:none;background:var(--surface);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 8px}
+.act .name{font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dots{display:flex;gap:4px;padding:0 52px}
+.dots span{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.dots span.past{background:#6A6B70}.dots span.now{background:var(--fg)}
+
+/* empty state */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:0 20px;text-align:center}
+.empty p{margin:0;font-size:14px;color:var(--muted);max-width:30ch;line-height:1.45}
+
+/* capture button */
+.cap{border-radius:999px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;text-align:center;background:var(--fg);color:var(--bg);border:8px solid var(--line-strong);font-weight:600;line-height:1.2;touch-action:none;transition:transform .12s ease}
+.cap.big{width:min(260px,70vw);height:min(260px,70vw);font-size:22px}
+.cap.dock{width:148px;height:148px;font-size:17px}
+.cap.holding{transform:scale(.95)}
+.cap.listening{background:var(--bg);color:var(--fg);border-color:var(--rec)}
+.cap .sub{font-family:var(--mono);font-size:12px;font-weight:400}
+.hint{font-size:11px;color:var(--muted)}
+
+/* timeline */
+.tl-head{padding:14px 20px 6px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.chip{min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line-strong);background:transparent;font-size:12px;display:flex;align-items:center;gap:6px}
+.tl{flex:1;min-height:0;overflow-y:auto;padding:0 20px;overscroll-behavior:contain}
+.row{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+.row .bg{position:absolute;inset:0;display:flex;align-items:center;gap:8px;padding:0 20px;font-size:14px;font-weight:600;background:var(--raised);visibility:hidden}
+.row .bg.left{justify-content:flex-end}
+.row .bg.past{background:var(--rec);color:#120807}
+.row .fg{position:relative;display:flex;align-items:center;gap:14px;min-height:62px;background:var(--bg);touch-action:pan-y}
+.row .n{width:26px;flex:none;font-family:var(--mono);font-size:13px;color:var(--muted)}
+.row .body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding:8px 0}
+.row .label{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .meta{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row.rec .label{font-weight:600}
+.recdot{display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--rec);margin-right:6px;vertical-align:1px;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+.ibtn{width:44px;height:44px;flex:none;border-radius:999px;border:1px solid var(--line-strong);background:transparent;display:flex;align-items:center;justify-content:center}
+.ibtn.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.dockbar{padding:14px 20px 18px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
+.ghost{min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line-strong);background:transparent;font-size:14px}
+.status{justify-self:end;display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:11px;color:var(--muted);text-align:right;line-height:1.3}
+
+/* toast */
+.toast{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:40;padding:6px 6px 6px 16px;border-radius:12px;background:var(--fg);color:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px}
+.toast button{min-height:40px;padding:0 14px;border-radius:8px;border:none;background:var(--bg);color:var(--fg);font-weight:600;font-size:14px}
+
+/* sheets */
+.scrim{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.62);display:flex;flex-direction:column;justify-content:flex-end}
+.sheet{background:var(--surface);border-radius:20px 20px 0 0;display:flex;flex-direction:column;max-height:92%;padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet.tall{height:92%}
+.sh-head{padding:16px 20px 12px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid var(--line)}
+.sh-title{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sh-title h2{margin:0;font-size:19px;font-weight:600}
+.x{width:44px;height:44px;flex:none;border-radius:999px;border:1px solid var(--line-strong);background:transparent;display:flex;align-items:center;justify-content:center}
+.search{display:flex;align-items:center;gap:8px;height:48px;padding:0 14px;border-radius:10px;border:1px solid var(--fg);background:var(--bg)}
+.search input{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:inherit;font-size:16px;color:var(--fg)}
+.sh-body{flex:1;min-height:0;overflow-y:auto;padding:4px 20px 16px;overscroll-behavior:contain}
+.sh-foot{padding:12px 20px 18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.group{margin:16px 0 4px}
+.opt{width:100%;min-height:58px;padding:8px 0;border:none;border-bottom:1px solid var(--line);background:transparent;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.opt .t{font-size:17px;font-weight:600}
+.opt .w{font-size:12px;color:var(--muted)}
+.opt.sm{min-height:48px}.opt.sm .t{font-size:15px;font-weight:400}
+.opt .tag{font-size:12px;color:var(--muted);flex:none}
+.opt.next .t::after{content:" · next up";font-family:var(--mono);font-size:11px;font-weight:400;color:var(--muted)}
+.wide{width:100%;min-height:52px;border-radius:12px;border:1px solid var(--line-strong);background:transparent;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px}
+.solid{background:var(--fg);color:var(--bg);border-color:var(--fg);font-weight:600}
+.pad{padding:18px 20px 20px;display:flex;flex-direction:column;gap:14px}
+.pad h2{margin:0;font-size:19px;font-weight:600}
+.pad p{margin:0;font-size:14px;color:var(--muted);line-height:1.45}
+textarea,.field{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line-strong);background:var(--bg);color:var(--fg);font-family:inherit;font-size:16px;line-height:1.4;resize:none}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.voice{min-height:64px;border-radius:14px;border:none;background:var(--fg);color:var(--bg);font-size:15px;font-weight:600;touch-action:none}
+.voice.on{background:var(--rec);color:#120807}
+
+/* setlist view */
+.sl{flex:1;min-height:0;overflow-y:auto;padding:0 20px 20px}
+.sl h1{margin:6px 0 2px;font-size:24px;font-weight:600;text-wrap:balance}
+.summary{font-size:14px;color:var(--muted)}
+.sl h3{margin:22px 0 4px;font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.srow{width:100%;display:flex;align-items:center;gap:12px;min-height:58px;padding:6px 0;border:none;border-bottom:1px solid var(--line);background:transparent;text-align:left}
+.srow .t{font-size:16px;font-weight:500}
+.srow .m{font-size:12px;color:var(--muted)}
+.pill{flex:none;font-size:11px;font-weight:600;padding:4px 9px;border-radius:999px;border:1px solid var(--line-strong);color:var(--muted)}
+.pill.need{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.box{margin-top:22px;padding:14px 16px;border-radius:12px;background:var(--surface);font-family:var(--mono);font-size:13px;line-height:1.7;white-space:pre-wrap;user-select:text;-webkit-user-select:text}
+.actions{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.acts-edit .arow{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.acts-edit .field{min-height:48px}
+.mini{width:40px;height:44px;flex:none;border-radius:8px;border:1px solid var(--line);background:transparent;display:flex;align-items:center;justify-content:center}
+.mini[disabled]{opacity:.35}
+.note{font-size:12px;color:var(--muted);line-height:1.45}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div id="layer"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+<script>
+'use strict';
+/* ---------- song data (setlist.fm, pulled Nov 2 2026) ---------- */
+const CATALOG = {
+  'Lowertown': {
+    tour: ['I Like You A Lot','Scum','(I Like to Play with) Mutts','Big Thumb','Bucktooth','Best Person You Know',"It's It's It's",'Debris','no way','At The End','Antibiotics'],
+    why: 'From their recent setlists',
+    extra: ['Seaface','Goon']
+  },
+  'First Day Back': {
+    tour: ['Sure, Ok','Passport','Upstairs (212)','Paint','Still Around','Us',"Maggie's Song",'Hope','Lines','Gone On','Drop D','Wait, Do You Hear That?','Moving Out','Twelve Mile Train Tracks'],
+    why: 'From their fall 2026 sets',
+    extra: []
+  },
+  'Big Boy': {
+    tour: ['Spades','Break','Identity','A/X','Enemy','Gone','T&T','365','F. N. S.','Mystify','Now?'],
+    why: 'Among their most-played songs',
+    extra: ['When I Prayed...','Other Side of the River (Life of Agony cover)']
+  },
+  'High Vis': {
+    tour: ['Drop Me Out',"Mind's a Lie",'Trauma Bonds','Altitude','Talk for Hours','Walking Wires','0151','Choose to Lose','Guided Tour','Out Cold','Mob DLA','The Bastard Inside','Forgot to Grow','Fever Dream',"A Fist for When You're Down",'Farringdon'],
+    why: 'Played often in 2026 · Seattle opened with the first three',
+    extra: ['Blending','Voices','Feeling Bless','Stabbed','Positive Intervention','Desire','Tribute','Blood Moon','Chug','Ski','Morning Glory (Oasis cover)']
+  },
+  'Basement': {
+    tour: ['Time Waster','Deadweight','The Way I Feel','Covet','Spoiled','Bad Apple',"Brother's Keeper",'WIRED','Are You the One','Embrace','Aquasun','Whole','Earl Grey','Head Alight','Broken by Design',"Summer's Colour",'Crickets Throw Their Voice','Pine','Promise Everything'],
+    why: 'Berkeley Oct 24 setlist order',
+    extra: ['Sever','Fading','For You the Moon','Yoke','Canada Square','Breathe','Disconnect','Oversized','Be Here Now','Plan to Be Surprised','Nothing Left','Stigmata','Reason for Breathing','Grayscale','Jet','Blinded Bye','Every Single Word','Hanging Around','New Coast','Keepsake','March','Black','Ultraviolet','Changing Lanes','Skip Town','Wish','1104 Porter St.','Comfort','DUI','White Elephant','Lose Your Grip','Meet Me in St. Louis','Control','Ellipses','Further Sky','School (Nirvana cover)']
+  }
+};
+const DEFAULT_SHOW = () => ({
+  id: 'show-2026-11-04-liberty-hall',
+  date: '2026-11-04', venue: 'Liberty Hall', city: 'Lawrence, KS',
+  acts: ['Lowertown','Big Boy','High Vis','Basement'].map((n,i)=>({id:'a'+(i+1), name:n})),
+  actIdx: 0, items: [], newestFirst: true, ended: false
+});
+const CLIP_MS = 20000, VOICE_MAX_MS = 15000, HOLD_MS = 520, SWIPE_PX = 110;
+
+/* ---------- storage (IndexedDB) ---------- */
+const DB = (() => {
+  let p;
+  const open = () => p || (p = new Promise((res, rej) => {
+    const r = indexedDB.open('setlist-catcher', 1);
+    r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('kv'); d.createObjectStore('clips'); };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const tx = async (store, mode, fn) => { const d = await open(); return new Promise((res, rej) => {
+    const t = d.transaction(store, mode); const req = fn(t.objectStore(store));
+    t.oncomplete = () => res(req && req.result); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+  }); };
+  return {
+    get: (s,k) => tx(s,'readonly', o => o.get(k)),
+    put: (s,k,v) => tx(s,'readwrite', o => o.put(v,k)),
+    del: (s,k) => tx(s,'readwrite', o => o.delete(k))
+  };
+})();
+let saveT;
+function save(){ clearTimeout(saveT); saveT = setTimeout(() => DB.put('kv','show', S.show).catch(err => toast('Couldn’t save to this phone: ' + err.message)), 150); }
+function saveNow(){ clearTimeout(saveT); return DB.put('kv','show', S.show); }
+
+/* ---------- state ---------- */
+const S = { show: null, view: 'capture', sheet: null, toast: null, holding: false, swipe: null, wake: null, micOk: null };
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+const act = () => S.show.acts[S.show.actIdx];
+const actById = id => S.show.acts.find(a => a.id === id);
+const fmtTime = ts => new Date(ts).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}).replace(' ', ' ').toLowerCase();
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cat = name => CATALOG[name] || null;
+function orderedItems(){ // items in setlist order: by act order, then by position within show
+  const order = S.show.acts.map(a => a.id);
+  return S.show.items.slice().sort((a,b) => (order.indexOf(a.actId) - order.indexOf(b.actId)) || (a.pos - b.pos));
+}
+function renumber(){ S.show.items.sort((a,b)=>a.pos-b.pos).forEach((it,i)=>it.pos=i); }
+
+/* ---------- icons ---------- */
+const I = {
+  back:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+  next:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  x:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  mic:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  flip:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/></svg>',
+  wave:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg>',
+  search:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
+  trash:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
+  up:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
+  down:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
+};
+
+/* ---------- audio ---------- */
+const MIME = (() => { if (!window.MediaRecorder) return null; for (const m of ['audio/webm;codecs=opus','audio/mp4','audio/webm','audio/ogg;codecs=opus']) if (MediaRecorder.isTypeSupported(m)) return m; return ''; })();
+const extFor = t => (t||'').includes('mp4') ? 'm4a' : (t||'').includes('ogg') ? 'ogg' : 'webm';
+let liveRec = null;
+async function getMic(){
+  return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
+}
+async function recordClip(item){
+  if (MIME === null || !navigator.mediaDevices) { item.recording = false; item.clipErr = 'This browser can’t record audio'; save(); render(); return; }
+  let stream;
+  try { stream = await getMic(); S.micOk = true; }
+  catch (e) { S.micOk = false; item.recording = false; item.clipErr = 'Microphone blocked'; save(); render(); toast('Microphone is blocked. The time was saved; allow the mic in site settings to record clips.'); return; }
+  const rec = new MediaRecorder(stream, MIME ? {mimeType: MIME, audioBitsPerSecond: 64000} : undefined);
+  const chunks = [];
+  rec.ondataavailable = e => e.data && e.data.size && chunks.push(e.data);
+  liveRec = { rec, item, stream };
+  rec.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop());
+    liveRec = null;
+    const blob = new Blob(chunks, {type: rec.mimeType || MIME || 'audio/webm'});
+    if (blob.size) { item.clipId = 'c-' + item.id; item.clipType = blob.type; try { await DB.put('clips', item.clipId, blob); } catch(e){ item.clipErr = 'Clip too big to store'; } }
+    item.recording = false; save(); render();
+  };
+  rec.start(1000);
+  setTimeout(() => rec.state !== 'inactive' && rec.stop(), CLIP_MS);
+}
+let player = null;
+async function play(clipId){
+  if (player) { player.pause(); URL.revokeObjectURL(player.src); player = null; }
+  const blob = await DB.get('clips', clipId).catch(()=>null);
+  if (!blob) { toast('That clip isn’t on this phone.'); return; }
+  player = new Audio(URL.createObjectURL(blob)); player.play().catch(()=>toast('Couldn’t play that clip.'));
+}
+
+/* ---------- wake lock ---------- */
+async function wake(){
+  if (!('wakeLock' in navigator) || document.visibilityState !== 'visible' || S.view !== 'capture') return;
+  try { S.wake = await navigator.wakeLock.request('screen'); S.wake.addEventListener('release', () => { S.wake = null; renderStatus(); }); } catch(e){ S.wake = null; }
+  renderStatus();
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wake(); });
+
+/* ---------- actions ---------- */
+function nextPos(){ return S.show.items.reduce((m,i)=>Math.max(m,i.pos), -1) + 1; }
+function capture(){
+  if (S.show.items.some(i => i.recording)) return;
+  const item = { id: uid(), ts: Date.now(), actId: act().id, pos: nextPos(), title: null, manual: false, note: '', voiceId: null, clipId: null, recording: true };
+  S.show.items.push(item); S.show.ended = false; save(); render(); recordClip(item);
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+function addManual(title, editId){
+  if (editId) { const it = S.show.items.find(i=>i.id===editId); if (it){ it.title = title; it.manual = true; it.picked = true; } }
+  else S.show.items.push({ id: uid(), ts: Date.now(), actId: act().id, pos: nextPos(), title, manual: true, note: '', voiceId: null, clipId: null });
+  S.sheet = null; save(); render();
+}
+function removeItem(id){
+  const idx = S.show.items.findIndex(i=>i.id===id); if (idx<0) return;
+  const [it] = S.show.items.splice(idx,1);
+  if (liveRec && liveRec.item === it) { liveRec.rec.stop(); }
+  S.swipe = null; save();
+  toast('Removed ' + (it.title ? '“' + it.title + '”' : 'that capture'), () => { S.show.items.push(it); save(); render(); });
+  render();
+}
+function toast(text, undo){
+  clearTimeout(S.toastT); S.toast = {text, undo};
+  S.toastT = setTimeout(() => { S.toast = null; renderLayer(); }, undo ? 5000 : 4000); renderLayer();
+}
+
+/* ---------- song picker logic ---------- */
+function pickerData(actName, q, forItemId){
+  const c = cat(actName);
+  const played = new Set(S.show.items.filter(i=>i.title && i.actId === (actByName(actName)||{}).id && i.id !== forItemId).map(i=>i.title));
+  const ql = (q||'').trim().toLowerCase();
+  if (!c) return { likely: [], all: [], played };
+  const all = Array.from(new Set([...c.tour, ...c.extra])).sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
+  if (ql) return { likely: [], all: all.filter(t => t.toLowerCase().includes(ql)), played };
+  // Likely: tour order, starting after the last song logged for this act
+  const actObj = actByName(actName);
+  const logged = S.show.items.filter(i => i.actId === actObj?.id && i.title && i.id !== forItemId).sort((a,b)=>a.pos-b.pos);
+  const last = logged.length ? c.tour.indexOf(logged[logged.length-1].title) : -1;
+  const rotated = last >= 0 ? [...c.tour.slice(last+1), ...c.tour.slice(0, last+1)] : c.tour;
+  const likely = rotated.filter(t => !played.has(t)).slice(0, 8).map((t,i) => ({ t, next: i===0 && last>=0 }));
+  return { likely, all, played, why: c.why };
+}
+function actByName(n){ return S.show.acts.find(a=>a.name===n); }
+
+/* ---------- setlist text ---------- */
+function setlistText(){
+  const out = [];
+  for (const a of S.show.acts){
+    const its = orderedItems().filter(i=>i.actId===a.id); if (!its.length) continue;
+    out.push(a.name); its.forEach((it,i) => out.push((i+1) + '. ' + (it.title || '(unidentified, clip ' + fmtTime(it.ts) + ')')));
+    out.push('');
+  }
+  return out.join('\n').trim() || 'Nothing captured yet.';
+}
+
+/* ---------- render ---------- */
+const app = document.getElementById('app'), layer = document.getElementById('layer');
+function render(){
+  if (S.view === 'capture') renderCapture(); else if (S.view === 'setlist') renderSetlist();
+  renderLayer();
+}
+function stepperHTML(){
+  const s = S.show, n = s.acts.length;
+  return `<div class="stepper">
+    <div class="steprow">
+      <button class="nav" data-a="prev" aria-label="Previous act" ${s.actIdx===0?'disabled':''}>${I.back}</button>
+      <button class="act" data-a="bill"><span class="eyebrow">Act ${s.actIdx+1} of ${n} · on stage</span><span class="name">${esc(act().name)}</span></button>
+      <button class="nav" data-a="next" aria-label="Next act" ${s.actIdx===n-1?'disabled':''}>${I.next}</button>
+    </div>
+    <div class="dots">${s.acts.map((a,i)=>`<span class="${i===s.actIdx?'now':i<s.actIdx?'past':''}"></span>`).join('')}</div>
+  </div>`;
+}
+function renderCapture(){
+  const s = S.show, recording = s.items.some(i=>i.recording);
+  const top = `<div class="top">
+    <button class="tbtn" data-a="toSetlist">Setlist</button>
+    <div class="where">${esc(s.venue)}<br>${new Date(s.date+'T12:00').toLocaleDateString([], {month:'short', day:'numeric'})}</div>
+    <button class="tbtn" data-a="endShow">End show</button>
+  </div>`;
+  const label = recording ? `Listening…<span class="sub">20 sec clip</span>` : (S.holding ? 'Keep holding…' : 'Tap when a<br>song starts');
+  const capCls = (recording?' listening':'') + (S.holding?' holding':'');
+  let body;
+  if (!s.items.length) {
+    body = `<div class="empty">
+      <button class="cap big${capCls}" id="cap" aria-label="Tap to record this song. Hold to pick it from a list.">${label}</button>
+      <span class="hint">Hold to pick a song</span>
+      <p>Each tap saves a 20-second clip and the time. Your captures list here as the night goes.</p>
+    </div>`;
+  } else {
+    const list = s.items.slice().sort((a,b)=>a.pos-b.pos);
+    const nums = new Map(list.map((it,i)=>[it.id,i+1]));
+    const shown = s.newestFirst ? list.slice().reverse() : list;
+    body = `<div class="tl-head">
+        <span class="eyebrow">Tonight · ${list.length} song${list.length===1?'':'s'}</span>
+        <button class="chip" data-a="flip" aria-label="${s.newestFirst?'Newest first. Switch to oldest first':'Oldest first. Switch to newest first'}">${I.flip} ${s.newestFirst?'Newest first':'Oldest first'}</button>
+      </div>
+      <div class="tl" id="tl">${shown.map(it => rowHTML(it, nums.get(it.id))).join('')}</div>
+      <div class="dockbar">
+        <button class="ghost" data-a="undoLast" style="justify-self:start">Undo last</button>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+          <button class="cap dock${capCls}" id="cap" aria-label="Tap to record this song. Hold to pick it from a list.">${label}</button>
+          <span class="hint">Hold to pick a song</span>
+        </div>
+        <div class="status" id="status"></div>
+      </div>`;
+  }
+  app.innerHTML = `<div class="view">${top}${stepperHTML()}${body}</div>`;
+  if (!s.items.length) app.querySelector('.empty').insertAdjacentHTML('beforeend', '<div class="status" id="status" style="justify-self:auto;align-items:center"></div>');
+  bindCap(); bindSwipes(); renderStatus();
+}
+function rowHTML(it, n){
+  const a = actById(it.actId);
+  const label = it.recording ? `<span class="recdot"></span>Listening… 20 sec` : esc(fmtTime(it.ts) + ' · ' + (it.title || (a ? a.name : 'Unknown act')));
+  const meta = it.recording ? esc(a ? a.name : '') : esc([it.manual ? 'Manually entered' : (it.clipId ? 'Clip saved' : (it.clipErr || '')), it.voiceId ? 'voice note' : '', it.note ? '“' + it.note + '”' : ''].filter(Boolean).join(' · ') || 'No note');
+  const hasNote = it.note || it.voiceId;
+  return `<div class="row${it.recording?' rec':''}" data-id="${it.id}">
+    <div class="bg">${I.trash}<span>Remove</span></div>
+    <div class="fg"><span class="n">${n}</span><div class="body"><span class="label">${label}</span><span class="meta">${meta}</span></div>
+    <button class="ibtn${hasNote?' on':''}" data-a="note" data-id="${it.id}" aria-label="${hasNote?'Edit note':'Add a note'} for song ${n}">${I.mic}</button></div>
+  </div>`;
+}
+function renderStatus(){
+  const el = document.getElementById('status'); if (!el) return;
+  el.innerHTML = `<span>Saved on phone</span><span>${S.wake ? 'Screen stays on' : 'Screen may sleep'}</span>`;
+}
+function renderSetlist(){
+  const s = S.show, its = orderedItems();
+  const unk = its.filter(i=>!i.title).length;
+  const groups = s.acts.map(a => {
+    const list = its.filter(i=>i.actId===a.id); if (!list.length) return '';
+    return `<h3>${esc(a.name)}</h3>` + list.map((it,i)=>`<button class="srow" data-a="item" data-id="${it.id}">
+      <span class="mono" style="width:22px;flex:none;font-size:13px;color:var(--muted)">${i+1}</span>
+      <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="t">${esc(it.title || 'Song ' + (i+1) + '?')}</span>
+      <span class="m">${esc([fmtTime(it.ts), it.manual?'manually entered':(it.clipId?'clip saved':(it.clipErr||'')), it.note?'“'+it.note+'”':'', it.voiceId?'voice note':''].filter(Boolean).join(' · '))}</span></span>
+      <span class="pill${it.title?'':' need'}">${it.title?(it.manual?'You picked':'Set'):'Name it'}</span></button>`).join('');
+  }).join('');
+  app.innerHTML = `<div class="view">
+    <div class="top"><button class="tbtn" data-a="toCapture">${I.back} Back to show</button><span></span></div>
+    <div class="sl">
+      <h1>${esc(s.venue)} · ${new Date(s.date+'T12:00').toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'})}</h1>
+      <div class="summary">${its.length} song${its.length===1?'':'s'}${unk ? ' · ' + unk + ' still to name' : ''} · tap any song to edit</div>
+      ${groups || '<p class="note" style="margin-top:20px">Nothing captured yet. Go back to the show and tap when a song starts.</p>'}
+      <h3>For setlist.fm</h3>
+      <div class="box" id="sltext">${esc(setlistText())}</div>
+      <div class="actions">
+        <button class="wide solid" data-a="copy">Copy setlist</button>
+        <button class="wide" data-a="exportClips">Save clips + show file</button>
+        <p class="note">Clips stay on this phone until you clear the browser’s site data. Save them once you’re home so they can be matched later.</p>
+        <button class="wide" data-a="askReset" style="margin-top:12px;color:var(--muted)">Clear all captures and start over</button>
+      </div>
+    </div></div>`;
+}
+function renderLayer(){
+  let h = '';
+  const sh = S.sheet;
+  if (sh) {
+    if (sh.type === 'picker') h += pickerHTML(sh);
+    else if (sh.type === 'note') h += noteHTML(sh);
+    else if (sh.type === 'bill') h += billHTML();
+    else if (sh.type === 'item') h += itemHTML(sh);
+    else if (sh.type === 'end') h += endHTML();
+    else if (sh.type === 'reset') h += `<div class="scrim" data-a="closeSheet"><div class="sheet" data-stop><div class="pad"><h2>Clear all ${S.show.items.length} captures?</h2><p>This deletes every capture, clip and note on this phone and keeps the bill. Save your clips first if you want them. This can’t be undone.</p><div class="two"><button class="wide" data-a="closeSheet">Keep them</button><button class="wide solid" data-a="doReset">Clear all</button></div></div></div></div>`;
+  }
+  if (S.toast) h += `<div class="toast" role="status"><span>${esc(S.toast.text)}</span>${S.toast.undo?'<button data-a="toastUndo">Undo</button>':''}</div>`;
+  const keepFocus = document.activeElement && document.activeElement.id === 'q' ? document.activeElement.selectionStart : null;
+  layer.innerHTML = h;
+  if (sh && sh.type === 'picker') { const q = document.getElementById('q'); if (q && (sh.focus || keepFocus !== null)) { q.focus(); if (keepFocus!==null) q.setSelectionRange(keepFocus, keepFocus); sh.focus = false; } }
+  if (sh && sh.type === 'note') bindVoice();
+}
+function pickerHTML(sh){
+  const editing = sh.itemId ? S.show.items.find(i=>i.id===sh.itemId) : null;
+  const a = editing ? actById(editing.actId) : act();
+  const d = pickerData(a.name, sh.q, sh.itemId);
+  const n = editing ? orderedItems().filter(i=>i.actId===a.id).indexOf(editing) + 1 : S.show.items.filter(i=>i.actId===a.id).length + 1;
+  const q = (sh.q||'').trim();
+  const exact = q && d.all.some(t=>t.toLowerCase()===q.toLowerCase());
+  return `<div class="scrim" data-a="closeSheet"><div class="sheet tall" data-stop>
+    <div class="sh-head">
+      <div class="sh-title"><div><div class="eyebrow">Song ${n} · ${esc(a.name)}</div><h2>Which song ${editing?'was':'is'} it?</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div>
+      <label class="search">${I.search}<input id="q" type="search" autocomplete="off" placeholder="Search ${esc(a.name)} songs" value="${esc(sh.q||'')}" aria-label="Search songs"></label>
+    </div>
+    <div class="sh-body">
+      ${d.likely.length ? `<div class="group eyebrow">Likely songs</div><div class="w" style="font-size:12px;color:var(--muted)">${esc(d.why)}</div>` + d.likely.map(l=>`<button class="opt${l.next?' next':''}" data-a="pick" data-t="${esc(l.t)}"><span class="t">${esc(l.t)}</span></button>`).join('') : ''}
+      ${q && !exact ? `<button class="opt" data-a="pick" data-t="${esc(q)}"><span><span class="t">Use “${esc(q)}”</span><br><span class="w">For a new or unreleased song, or a cover</span></span></button>` : ''}
+      ${d.all.length ? `<div class="group eyebrow">${q?'Matches':'All ' + esc(a.name) + ' songs'}</div>` + d.all.map(t=>`<button class="opt sm" data-a="pick" data-t="${esc(t)}"><span class="t">${esc(t)}</span><span class="tag">${d.played.has(t)?'played tonight':''}</span></button>`).join('') : (!cat(a.name) && !q ? `<p class="note" style="margin-top:16px">No song list for ${esc(a.name)} yet. Type the title above.</p>` : '')}
+    </div>
+    ${editing ? '' : `<div class="sh-foot"><button class="wide" data-a="recordInstead">${I.wave} Not sure? Record a clip instead</button></div>`}
+  </div></div>`;
+}
+function noteHTML(sh){
+  const it = S.show.items.find(i=>i.id===sh.itemId); if (!it) return '';
+  return `<div class="scrim" data-a="closeSheet"><div class="sheet" data-stop><div class="pad">
+    <div class="sh-title"><h2>Note for ${esc(it.title || 'song at ' + fmtTime(it.ts))}</h2><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div>
+    <p>A lyric, a title the band said, anything that helps you name it later.</p>
+    <textarea id="notetext" rows="3" placeholder="“…don’t let the river take…”">${esc(it.note)}</textarea>
+    <div class="two">
+      <button class="voice${S.voiceRec?' on':''}" id="voice">${S.voiceRec ? 'Recording… let go to stop' : (it.voiceId ? 'Hold to redo voice note' : 'Hold to speak')}</button>
+      ${it.voiceId ? `<button class="wide" data-a="playVoice" data-id="${it.id}">Play voice note</button>` : `<button class="wide" data-a="saveNote" data-id="${it.id}">Save note</button>`}
+    </div>
+    ${it.voiceId ? `<button class="wide solid" data-a="saveNote" data-id="${it.id}">Save note</button>` : ''}
+  </div></div></div>`;
+}
+function billHTML(){
+  const s = S.show;
+  return `<div class="scrim" data-a="closeSheet"><div class="sheet tall" data-stop>
+    <div class="sh-head"><div class="sh-title"><div><div class="eyebrow">Tonight’s bill · in order</div><h2>Who’s playing</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div></div>
+    <div class="sh-body acts-edit">
+      ${s.acts.map((a,i)=>`<div class="arow">
+        <button class="wide${i===s.actIdx?' solid':''}" style="width:auto;flex:1;justify-content:flex-start;padding:0 14px" data-a="goAct" data-i="${i}">${i+1}. ${esc(a.name)}${i===s.actIdx?' · on now':''}</button>
+        <button class="mini" data-a="actUp" data-i="${i}" ${i===0?'disabled':''} aria-label="Move ${esc(a.name)} earlier">${I.up}</button>
+        <button class="mini" data-a="actDown" data-i="${i}" ${i===s.acts.length-1?'disabled':''} aria-label="Move ${esc(a.name)} later">${I.down}</button>
+        <button class="mini" data-a="actRename" data-i="${i}" aria-label="Rename ${esc(a.name)}">Aa</button>
+        <button class="mini" data-a="actRemove" data-i="${i}" aria-label="Remove ${esc(a.name)}" ${s.items.some(it=>it.actId===a.id)||s.acts.length===1?'disabled':''}>${I.trash}</button>
+      </div>`).join('')}
+      ${S.renaming!=null ? `<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px"><input class="field" id="actname" value="${esc(S.renaming>=0?s.acts[S.renaming].name:'')}" placeholder="Band name" aria-label="Band name"><button class="wide solid" data-a="actSave">${S.renaming>=0?'Rename':'Add act'}</button></div>` : `<button class="wide" style="margin-top:14px" data-a="actAdd">+ Add an act</button>`}
+      <p class="note" style="margin-top:14px">Song lists are loaded for Lowertown, Big Boy, High Vis and Basement, plus First Day Back in case the opener changes (rename the act to switch). Any act without a list still works; you just type the titles.</p>
+    </div>
+  </div></div>`;
+}
+function itemHTML(sh){
+  const it = S.show.items.find(i=>i.id===sh.itemId); if (!it) return '';
+  const list = orderedItems(), idx = list.indexOf(it);
+  const sameAct = list.filter(i=>i.actId===it.actId), k = sameAct.indexOf(it);
+  return `<div class="scrim" data-a="closeSheet"><div class="sheet" data-stop><div class="pad">
+    <div class="sh-title"><div><div class="eyebrow">${esc(actById(it.actId)?.name||'')} · ${fmtTime(it.ts)}</div><h2>${esc(it.title || 'Unnamed song')}</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div>
+    ${it.note ? `<p>“${esc(it.note)}”</p>` : ''}
+    <div class="two">
+      ${it.clipId ? `<button class="wide" data-a="play" data-id="${it.id}">${I.wave} Play clip</button>` : ''}
+      ${it.voiceId ? `<button class="wide" data-a="playVoice" data-id="${it.id}">${I.mic} Voice note</button>` : ''}
+      <button class="wide solid" data-a="rename" data-id="${it.id}">${it.title?'Change song':'Name this song'}</button>
+      <button class="wide" data-a="note" data-id="${it.id}">${it.note||it.voiceId?'Edit note':'Add note'}</button>
+      <button class="wide" data-a="moveUp" data-id="${it.id}" ${k<=0?'disabled style="opacity:.35"':''}>${I.up} Move up</button>
+      <button class="wide" data-a="moveDown" data-id="${it.id}" ${k>=sameAct.length-1?'disabled style="opacity:.35"':''}>${I.down} Move down</button>
+    </div>
+    <div class="eyebrow" style="margin-top:4px">Played by</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${S.show.acts.map(a=>`<button class="chip${a.id===it.actId?' solid':''}" style="min-height:44px;${a.id===it.actId?'background:var(--fg);color:var(--bg)':''}" data-a="setAct" data-id="${it.id}" data-act="${a.id}">${esc(a.name)}</button>`).join('')}</div>
+    <button class="wide" data-a="remove" data-id="${it.id}" style="color:var(--rec);border-color:var(--rec)">${I.trash} Remove from setlist</button>
+  </div></div></div>`;
+}
+function endHTML(){
+  return `<div class="scrim" data-a="closeSheet"><div class="sheet" data-stop><div class="pad">
+    <h2>End the show?</h2>
+    <p>You’ll go to the setlist. Nothing is deleted, and you can go back to capturing if there’s an encore.</p>
+    <div class="two"><button class="wide" data-a="closeSheet">Keep going</button><button class="wide solid" data-a="confirmEnd">End show</button></div>
+  </div></div></div>`;
+}
+
+/* ---------- capture button: tap vs hold ---------- */
+function bindCap(){
+  const b = document.getElementById('cap'); if (!b) return;
+  let t, held = false, down = false;
+  b.addEventListener('pointerdown', e => {
+    if (S.show.items.some(i=>i.recording)) return;
+    down = true; held = false; try { b.setPointerCapture(e.pointerId); } catch(_){}
+    S.holding = true; b.classList.add('holding'); b.innerHTML = 'Keep holding…';
+    t = setTimeout(() => { held = true; S.holding = false; if (navigator.vibrate) navigator.vibrate([15,40,15]); openPicker(); }, HOLD_MS);
+  });
+  const up = (fire) => () => { if (!down) return; down = false; clearTimeout(t); const wasHolding = S.holding; S.holding = false; if (fire && !held && wasHolding) capture(); else if (!held) render(); };
+  b.addEventListener('pointerup', up(true));
+  b.addEventListener('pointercancel', up(false));
+  b.addEventListener('contextmenu', e => e.preventDefault());
+  b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); capture(); } });
+}
+function openPicker(itemId){ S.sheet = { type:'picker', q:'', itemId: itemId || null, focus: false }; render(); }
+
+/* ---------- swipe to remove ---------- */
+function bindSwipes(){
+  document.querySelectorAll('.row').forEach(row => {
+    const fg = row.querySelector('.fg'), bg = row.querySelector('.bg'); let g = null;
+    fg.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; g = { x: e.clientX, y: e.clientY, live: false, id: e.pointerId }; });
+    fg.addEventListener('pointermove', e => {
+      if (!g) return; const dx = e.clientX - g.x, dy = e.clientY - g.y;
+      if (!g.live) { if (Math.abs(dy) > 12) { g = null; return; } if (Math.abs(dx) > 12) { g.live = true; try { fg.setPointerCapture(g.id); } catch(_){} } else return; }
+      g.dx = dx; fg.style.transition = 'none'; fg.style.transform = `translateX(${dx}px)`;
+      bg.style.visibility = 'visible'; bg.classList.toggle('left', dx < 0); bg.classList.toggle('past', Math.abs(dx) > SWIPE_PX);
+      bg.querySelector('span').textContent = Math.abs(dx) > SWIPE_PX ? 'Release to remove' : 'Remove';
+    });
+    const end = () => { if (!g) return; const live = g.live, dx = g.dx || 0; g = null; if (!live) return;
+      if (Math.abs(dx) > SWIPE_PX) removeItem(row.dataset.id);
+      else { fg.style.transition = 'transform .18s ease'; fg.style.transform = 'translateX(0)'; setTimeout(()=>bg.style.visibility='hidden', 180); } };
+    fg.addEventListener('pointerup', end); fg.addEventListener('pointercancel', end);
+  });
+}
+
+/* ---------- voice notes ---------- */
+let voice = null;
+function bindVoice(){
+  const b = document.getElementById('voice'); if (!b) return;
+  const ta = document.getElementById('notetext');
+  b.addEventListener('contextmenu', e => e.preventDefault());
+  b.addEventListener('pointerdown', async e => {
+    if (voice) return; try { b.setPointerCapture(e.pointerId); } catch(_){}
+    const draft = ta ? ta.value : '';
+    let stream; try { stream = await getMic(); } catch(err){ toast('Microphone is blocked, so type the note instead.'); return; }
+    const rec = new MediaRecorder(stream, MIME ? {mimeType: MIME} : undefined), chunks = [];
+    rec.ondataavailable = ev => ev.data.size && chunks.push(ev.data);
+    const it = S.show.items.find(i=>i.id===S.sheet.itemId);
+    rec.onstop = async () => { stream.getTracks().forEach(t=>t.stop()); voice = null; S.voiceRec = false;
+      const blob = new Blob(chunks, {type: rec.mimeType || 'audio/webm'});
+      if (blob.size > 2000 && it) { it.voiceId = 'v-' + it.id; it.voiceType = blob.type; await DB.put('clips', it.voiceId, blob).catch(()=>{}); }
+      if (it && draft !== undefined) it.note = draft.trim();
+      save(); render(); };
+    voice = rec; S.voiceRec = true; rec.start(); b.classList.add('on'); b.textContent = 'Recording… let go to stop';
+    voice.timer = setTimeout(() => rec.state !== 'inactive' && rec.stop(), VOICE_MAX_MS);
+  });
+  const stop = () => { if (voice && voice.state !== 'inactive') { clearTimeout(voice.timer); voice.stop(); } };
+  b.addEventListener('pointerup', stop); b.addEventListener('pointercancel', stop);
+}
+
+/* ---------- export ---------- */
+async function exportClips(){
+  const its = orderedItems();
+  const meta = { app: 'Setlist Catcher', exported: new Date().toISOString(), show: { date: S.show.date, venue: S.show.venue, city: S.show.city, acts: S.show.acts.map(a=>a.name) }, songs: [] };
+  if (!window.JSZip) { toast('The zip tool didn’t load. Open the app once with signal, then try again.'); return; }
+  toast('Packing clips…');
+  const zip = new window.JSZip(); const folder = zip.folder('clips');
+  let n = 0;
+  for (const [i, it] of its.entries()){
+    const a = actById(it.actId)?.name || 'Unknown';
+    const base = String(i+1).padStart(2,'0') + ' ' + a.replace(/[^\w ]+/g,'') + ' ' + fmtTime(it.ts).replace(/[:  ]/g,'');
+    const row = { order: i+1, act: a, time: new Date(it.ts).toISOString(), title: it.title, manuallyEntered: it.manual, note: it.note || null, clip: null, voiceNote: null };
+    if (it.clipId){ const b = await DB.get('clips', it.clipId).catch(()=>null); if (b){ row.clip = 'clips/' + base + '.' + extFor(b.type); folder.file(base + '.' + extFor(b.type), b); n++; } }
+    if (it.voiceId){ const b = await DB.get('clips', it.voiceId).catch(()=>null); if (b){ row.voiceNote = 'clips/' + base + ' voice.' + extFor(b.type); folder.file(base + ' voice.' + extFor(b.type), b); } }
+    meta.songs.push(row);
+  }
+  zip.file('show.json', JSON.stringify(meta, null, 2));
+  zip.file('setlist.txt', setlistText());
+  const blob = await zip.generateAsync({type:'blob'});
+  const name = 'setlist-' + S.show.date + '-' + S.show.venue.toLowerCase().replace(/\W+/g,'-') + '.zip';
+  const file = new File([blob], name, {type:'application/zip'});
+  if (navigator.canShare && navigator.canShare({files:[file]})) {
+    try { await navigator.share({files:[file], title: name}); toast('Shared ' + n + ' clip' + (n===1?'':'s') + '.'); return; } catch(e){ if (e.name === 'AbortError') return; }
+  }
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  toast('Saved ' + name);
+}
+
+/* ---------- event delegation ---------- */
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-a]'); if (!el) return;
+  if (el.classList.contains('scrim') && e.target.closest('[data-stop]')) return; // clicks inside a sheet don't close it
+  const a = el.dataset.a, id = el.dataset.id, s = S.show;
+  const it = id ? s.items.find(i=>i.id===id) : null;
+  switch (a){
+    case 'prev': if (s.actIdx>0){ s.actIdx--; save(); render(); } break;
+    case 'next': if (s.actIdx<s.acts.length-1){ s.actIdx++; save(); render(); } break;
+    case 'bill': S.renaming = null; S.sheet = {type:'bill'}; renderLayer(); break;
+    case 'goAct': s.actIdx = +el.dataset.i; S.sheet = null; save(); render(); break;
+    case 'actUp': case 'actDown': { const i = +el.dataset.i, j = a==='actUp'?i-1:i+1; const cur = act(); [s.acts[i], s.acts[j]] = [s.acts[j], s.acts[i]]; s.actIdx = s.acts.indexOf(cur); save(); render(); break; }
+    case 'actRename': S.renaming = +el.dataset.i; renderLayer(); document.getElementById('actname')?.focus(); break;
+    case 'actAdd': S.renaming = -1; renderLayer(); document.getElementById('actname')?.focus(); break;
+    case 'actSave': { const v = document.getElementById('actname').value.trim(); if (!v) break; if (S.renaming>=0) s.acts[S.renaming].name = v; else s.acts.push({id:'a'+uid(), name:v}); S.renaming = null; save(); render(); break; }
+    case 'actRemove': { const i = +el.dataset.i; const cur = act(); s.acts.splice(i,1); s.actIdx = Math.max(0, s.acts.indexOf(cur)); if (s.actIdx<0) s.actIdx = 0; save(); render(); break; }
+    case 'flip': s.newestFirst = !s.newestFirst; save(); render(); break;
+    case 'undoLast': { const last = s.items.slice().sort((x,y)=>y.ts-x.ts)[0]; if (last) removeItem(last.id); break; }
+    case 'note': S.sheet = {type:'note', itemId:id}; renderLayer(); break;
+    case 'saveNote': { const t = document.getElementById('notetext'); if (it && t) it.note = t.value.trim(); S.sheet = null; save(); render(); break; }
+    case 'playVoice': if (it && it.voiceId) play(it.voiceId); break;
+    case 'play': if (it && it.clipId) play(it.clipId); break;
+    case 'pick': addManual(el.dataset.t, S.sheet.itemId); break;
+    case 'recordInstead': S.sheet = null; capture(); break;
+    case 'closeSheet': if (e.target === el || el.tagName === 'BUTTON') { if (voice) return; S.sheet = null; S.renaming = null; renderLayer(); } break;
+    case 'toastUndo': { const u = S.toast && S.toast.undo; S.toast = null; if (u) u(); renderLayer(); break; }
+    case 'toSetlist': S.view = 'setlist'; render(); break;
+    case 'toCapture': S.view = 'capture'; render(); wake(); break;
+    case 'endShow': S.sheet = {type:'end'}; renderLayer(); break;
+    case 'confirmEnd': s.ended = true; S.sheet = null; S.view = 'setlist'; save(); if (S.wake) { S.wake.release().catch(()=>{}); } render(); break;
+    case 'item': S.sheet = {type:'item', itemId:id}; renderLayer(); break;
+    case 'rename': openPicker(id); break;
+    case 'moveUp': case 'moveDown': {
+      const same = orderedItems().filter(i=>i.actId===it.actId); const k = same.indexOf(it), j = a==='moveUp'?k-1:k+1;
+      if (j>=0 && j<same.length){ const o = same[j]; [it.pos, o.pos] = [o.pos, it.pos]; save(); render(); } break; }
+    case 'setAct': if (it){ it.actId = el.dataset.act; save(); render(); } break;
+    case 'remove': S.sheet = null; removeItem(id); break;
+    case 'copy': { const txt = setlistText(); try { await navigator.clipboard.writeText(txt); toast('Setlist copied. Paste it into setlist.fm.'); } catch(_){ const r = document.createRange(); r.selectNodeContents(document.getElementById('sltext')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast('Text selected. Use your phone’s Copy.'); } break; }
+    case 'exportClips': exportClips(); break;
+    case 'askReset': S.sheet = {type:'reset'}; renderLayer(); break;
+    case 'doReset': { for (const i of s.items){ if (i.clipId) DB.del('clips', i.clipId).catch(()=>{}); if (i.voiceId) DB.del('clips', i.voiceId).catch(()=>{}); }
+      s.items = []; s.actIdx = 0; s.ended = false; S.sheet = null; S.view = 'capture'; save(); render(); toast('Cleared. Ready for the show.'); break; }
+  }
+});
+document.addEventListener('input', e => { if (e.target.id === 'q' && S.sheet) { S.sheet.q = e.target.value;
+  const tmp = document.createElement('div'); tmp.innerHTML = pickerHTML(S.sheet);
+  const cur = layer.querySelector('.sh-body'), nb = tmp.querySelector('.sh-body'); if (cur && nb) { cur.innerHTML = nb.innerHTML; cur.scrollTop = 0; } } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet && !voice) { S.sheet = null; renderLayer(); } });
+window.addEventListener('pagehide', () => { saveNow().catch(()=>{}); });
+
+/* ---------- boot ---------- */
+(async function boot(){
+  try { S.show = await DB.get('kv','show'); } catch(e){ S.show = null; }
+  if (!S.show) { S.show = DEFAULT_SHOW(); save(); }
+  // A clip that was recording when the app closed can't be finished.
+  S.show.items.forEach(i => { if (i.recording) { i.recording = false; if (!i.clipId) i.clipErr = 'Recording cut off'; } });
+  if (S.show.ended) S.view = 'setlist';
+  render(); wake();
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+})();
+</script>
+</body>
+</html>
