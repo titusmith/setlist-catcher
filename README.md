@@ -13,7 +13,7 @@ Live at https://titusmith.github.io/setlist-catcher/ once GitHub Pages is on (Se
 
 ## Send to Spotify
 
-From the setlist screen, **Send to Spotify** matches every named song on Spotify, flags weak matches (amber) and misses (red) so you can fix titles, then creates a private playlist named after the headliner, venue and date. After that the button opens the playlist, and if you change songs it offers **Update the Spotify playlist**, which replaces the songs in the same playlist instead of making a new one.
+From the setlist screen, **Send to Spotify** matches every named song on Spotify, flags weak matches (amber) and misses (red) so you can fix titles, then creates a private playlist named "BandName M-D-YY" (for example "Basement 11-4-26"), using the last act you included. After that the button opens the playlist, and if you change songs it offers **Update the Spotify playlist**, which replaces the songs in the same playlist instead of making a new one.
 
 One-time setup, reusing an existing Spotify developer app:
 1. In the Spotify developer dashboard, open the app and add this Redirect URI exactly: `https://titusmith.github.io/setlist-catcher/callback.html`

@@ -617,7 +617,7 @@ async function exportClips(){
   zip.file('show.json', JSON.stringify(meta, null, 2));
   zip.file('setlist.txt', setlistText());
   const blob = await zip.generateAsync({type:'blob'});
-  const name = 'setlist-' + S.show.date + '-' + S.show.venue.toLowerCase().replace(/\W+/g,'-') + '.zip';
+  const name = showName(S.show.acts[S.show.acts.length-1]?.name || 'Show').replace(/[\\/:*?"<>|]+/g, '') + '.zip';
   const file = new File([blob], name, {type:'application/zip'});
   if (navigator.canShare && navigator.canShare({files:[file]})) {
     try { await navigator.share({files:[file], title: name}); toast('Shared ' + n + ' clip' + (n===1?'':'s') + '.'); return; } catch(e){ if (e.name === 'AbortError') return; }
@@ -692,7 +692,10 @@ window.addEventListener('pagehide', () => { saveNow().catch(()=>{}); });
 /* ---------- Send to Spotify ---------- */
 const longDate = d => new Date(d+'T12:00').toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
 function spCfg(){ const s = S.show; s.sp = s.sp || { name: '', offActs: [], preferOriginal: false, playlist: null }; return s.sp; }
-function spDefaultName(){ const s = S.show, head = s.acts[s.acts.length-1]; return `${head ? head.name : 'Live'} at ${s.venue}, ${s.city} (${longDate(s.date)})`; }
+// Standard name: "BandName M-D-YY", e.g. "Basement 11-4-26". The band is the last act included (the headliner).
+function showName(band){ const [y, m, d] = S.show.date.split('-').map(Number); return `${band} ${m}-${d}-${String(y).slice(-2)}`; }
+function spDefaultName(){ const s = S.show, c = spCfg(); const acts = s.acts.filter(a => !c.offActs.includes(a.id) && s.items.some(i => i.actId === a.id && i.title));
+  const head = acts[acts.length-1] || s.acts[s.acts.length-1]; return showName(head ? head.name : 'Live'); }
 function spSongs(){ // songs that would go to Spotify, in setlist order
   const c = spCfg();
   return orderedItems().filter(i => i.title && !c.offActs.includes(i.actId));
@@ -827,7 +830,7 @@ document.addEventListener('change', e => {
   if (t.classList && t.classList.contains('sptitle')) {
     const it = S.show.items.find(i => i.id === t.dataset.id); const v = t.value.trim();
     if (it && v && v !== it.title) { it.title = v; it.sp = undefined; S.spStatus = ''; save(); spRerender(); }
-  } else if (t.id === 'plname') { spCfg().name = t.value.trim(); save(); }
+  } else if (t.id === 'plname') { const v = t.value.trim(); spCfg().name = v === spDefaultName() ? '' : v; save(); }
 });
 
 /* ---------- boot ---------- */
