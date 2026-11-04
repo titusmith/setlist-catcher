@@ -9,6 +9,10 @@ A phone web app for logging a concert setlist while you watch.
 
 Everything is stored on the phone and the app works offline after the first visit.
 
+**Shows.** Tap the venue and date at the top (or **Shows** on the setlist screen) to switch shows or add a new one. On the first open of a show day the app jumps to that day's show. A band that plays more than one set gets one entry per set (Set 1, Set 2, Encore); add one from the bill with **Add another set**. The setlist.fm text keeps the set breaks, and the Spotify playlist includes every set.
+
+Preloaded: Goose at The Midland Theatre, Kansas City (Nov 3 2026, two sets and an encore) and Lowertown / Big Boy / High Vis / Basement at Liberty Hall, Lawrence (Nov 4 2026).
+
 Live at https://titusmith.github.io/setlist-catcher/ once GitHub Pages is on (Settings → Pages → Deploy from a branch → main → / (root)).
 
 ## Send to Spotify

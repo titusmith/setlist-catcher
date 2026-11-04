@@ -34,7 +34,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px 0}
 .tbtn{min-height:44px;padding:0 10px;border:none;background:transparent;font-size:15px;font-weight:500;display:flex;align-items:center;gap:6px;border-radius:10px}
 .tbtn:active{background:var(--surface)}
-.where{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;line-height:1.3}
+.where{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;line-height:1.3;border:none;background:transparent;min-height:44px;padding:2px 8px;border-radius:10px;max-width:46vw}
+.where:active{background:var(--surface)}
 
 /* act stepper */
 .stepper{padding:10px 20px 0;display:flex;flex-direction:column;gap:10px}
@@ -160,8 +161,14 @@ a.wide{text-decoration:none;color:inherit}a.wide.solid{color:var(--bg)}
 <script src="spotify.js"></script>
 <script>
 'use strict';
-/* ---------- song data (setlist.fm, pulled Nov 2 2026) ---------- */
+/* ---------- song data (setlist.fm, pulled Nov 2–3 2026) ---------- */
 const CATALOG = {
+  'Goose': {
+    tour: ["Animal", "Hot Love & The Lazy Poet", "Your Direction", "Dustin Hoffman", "Echo of a Rose", "Jed Stone", "Hungersite", "Creatures", "Good2B", "Thatch", "So Ready", "Dripfield", "Big Modern!", "Madalena", "Arcadia", "Royal", "Tumble", "The Empress of Organos", "Give It Time", "Hot Tea", "Peach (Future Islands cover)", "Into the Myst", "Rockdale", "Don't Leave Me This Way (Harold Melvin & The Blue Notes cover)", "Atlas Dogs", "Butter Rum", "This Old Sea", "White Lights", "ShamaLamma Ding Dong (Otis Day & the Knights cover)", "Torero", "Savenger", "SALT", "MEDIA", "POP", "Good Times // End Times", "Lead Up", "726", "Pancakes (Great Blue cover)"],
+    why: 'Played most in 2026. Goose rarely repeats a song in a night, so songs drop off once you log them.',
+    rotate: false, likelyCount: 12,
+    extra: ["Madhuvan", "Flodown", "All I Need", "Jive I", "Drive", "Wysteria Lane", "Yeti (Great Blue cover)", "Turned Clouds", "Indian River", "Time to Flee", "Slow Ready", "Arrow", "Jive Lee", "Jive II", "Silver Rising", "Lead the Way", "A Western Sun", "Rosewood Heart", "SOS", "Red Bird", "Elizabeth", "Bob Don", "Seekers on the Ridge pt. I", "Seekers on the Ridge pt. II", "Borne", "California Magic", "Turn On Your Love Light (Bobby \"Blue\" Bland cover)", "Earthling or Alien?", "Dr. Darkness", "Everything Must Go", "The Whales", "Turbulence & The Night Rays", "Doc Brown (Great Blue cover)", "Mr. Action", "Electric Avenue (Eddy Grant cover)", "Spirit of the Dark Horse", "The Way It Is (Bruce Hornsby & the Range cover)", "Baby Don't You Do It (Marvin Gaye cover)", "Atlas (The Wood Brothers cover)", "Feel It Now", "Me and My Uncle (John Phillips cover)", "Crosseyed and Painless (Talking Heads cover)", "Green River (Creedence Clearwater Revival cover)", "Honeybee", "Mississippi Half-Step Uptown Toodeloo (Grateful Dead cover)", "Your Ocean", "Fish in the Sea (Fat Freddy's Drop cover)", "Travelers", "The Old Man's Boat", "Can't Get You Out of My Head (Kylie Minogue cover)", "Disco Inferno (The Trammps cover)", "Factory Fiction", "Escape (The Piña Colada Song) (Rupert Holmes cover)", "Mas que nada (Jorge Ben Jor cover)", "Elmeg the Wise", "Pumped Up Kicks (Foster the People cover)", "Doobie Song", "Draconian Meter Maid (Swimmer cover)", "Switchin' (Wes Montgomery cover)", "Moby", "Make the Move (Kenny Loggins cover)", "Me and Julio Down by the Schoolyard (Paul Simon cover)", "Sinner Man", "Butterflies (Great Blue cover)", "Danger Zone (Kenny Loggins cover)", "Ghostbusters (Run-D.M.C. cover)", "I'm Writing a Novel (Father John Misty cover)", "Little Liza Jane", "Caution (Bob Marley & The Wailers cover)", "Hollywood Nights (Bob Seger & the Silver Bullet Band cover)", "Inside Out (Spoon cover)", "No Rain (Blind Melon cover)", "One More Saturday Night (Bob Weir cover)", "The W.S. Walcott Medicine Show (The Band cover)", "Wild Night (Van Morrison cover)", "Eminence Front (The Who cover)", "I'm Alright (Kenny Loggins cover)", "Iguana Song", "In Your Eyes (Peter Gabriel cover)", "Peggy-O", "Please Forgive Me (David Gray cover)", "Tomorrow Never Knows (The Beatles cover)", "A Fifth of Beethoven (Walter Murphy cover)", "I Would Die 4 U (Prince cover)", "Interlude II", "Movin' Out (Anthony's Song) (Billy Joel cover)", "State of the Art (A.E.I.O.U.) (Jim James cover)", "(dawn)", "Bloodbuzz Ohio (The National cover)", "Hot Hot Hot (The Merrymen cover)", "Jeff Engborg (Great Blue cover)", "Loose Ends", "Mustang Sally (Sir Mack Rice cover)", "Boogie on Reggae Woman (Stevie Wonder cover)", "One In, One Out", "Dancing in the Moonlight (Boffalongo cover)", "It Burns Within (St. John's Revival cover)", "Rock the Casbah (The Clash cover)", "The Labyrinth", "Weird Fishes/Arpeggi (Radiohead cover)", "Also sprach Zarathustra (Richard Strauss cover)", "AUATC (Bon Iver cover)", "How It Ends", "Look Out Cleveland (The Band cover)", "Cantaloupe Island (Herbie Hancock cover)", "Christmas Card From a Hooker in Minneapolis (Tom Waits cover)", "I Wish (Stevie Wonder cover)", "Let's Dance (David Bowie cover)", "Magic Carpet Ride (Steppenwolf cover)", "Nights in White Satin (The Moody Blues cover)", "One More Day (The Wood Brothers cover)", "You Spin Me Round (Like a Record) (Dead or Alive cover)", "Life on the Shelf", "Take On Me (a-ha cover)", "Whip It (DEVO cover)", "Arise (St. John's Revival cover)", "Love Is a Battlefield (Pat Benatar cover)", "Not Alone", "Running Up That Hill (A Deal With God) (Kate Bush cover)", "Shout (The Isley Brothers cover)", "What's Up? (4 Non Blondes cover)", "(((postplace)))", "Dragonfly I", "Get the Funk Out Ma Face (The Brothers Johnson cover)", "My Generation (The Who cover)", "Praise You (Fatboy Slim cover)", "Sco-Mule (Gov't Mule cover)", "Strange Overtones (Brian Eno & David Byrne cover)", "The Killing Moon (Echo & the Bunnymen cover)", "Trevor Reads Poetry", "Atlantic City (Bruce Springsteen cover)", "Dragonfly II", "Peaches en Regalia (Frank Zappa cover)", "Strokin' (Clarence Carter cover)", "Amongster (Poliça cover)", "Bear (The Shouting Matches cover)", "Billie Jean (Michael Jackson cover)", "Burn the Witch (Radiohead cover)", "Doctor My Eyes (Jackson Browne cover)", "fast:slow", "Gringo", "Hard to Handle (Otis Redding cover)", "Hot Night (Laura Branigan cover)", "Howard Johnson's Got His Ho-Jo Working (NRBQ cover)", "Linus and Lucy (Vince Guaraldi Trio cover)", "No California (Ilsey cover)", "Revival (The Allman Brothers Band cover)", "Up on Cripple Creek (The Band cover)", "Use Me (Bill Withers cover)", "Welcome to Delta", "Every Little Thing She Does Is Magic (The Police cover)", "Free Space", "Gun Street Girl (Tom Waits cover)", "Secret Agent Man (The Challengers cover)", "Sleep Walk (Santo & Johnny cover)", "Spain (Return to Forever cover)", "True Love Waits (Radiohead cover)", "U.S. Blues (Grateful Dead cover)", "Wake Up (Arcade Fire cover)", "(s∆tellite)", "American Woman (The Guess Who cover)", "Brokedown Palace (Grateful Dead cover)", "Franklin's Tower (Grateful Dead cover)", "Chank (Medeski Scofield Martin & Wood cover)", "Circle of Life (Elton John cover)", "Gone Gone Good", "In Memory of Elizabeth Reed (The Allman Brothers Band cover)", "Mad World (Tears for Fears cover)", "Moonrise", "Psycho Killer (Talking Heads cover)", "Short People (Randy Newman cover)", "(begin)", "(you are here)", "((savengersspell))", "(faena)", "(again)", "((nocturne))"]
+  },
   'Lowertown': {
     tour: ['I Like You A Lot','Scum','(I Like to Play with) Mutts','Big Thumb','Bucktooth','Best Person You Know',"It's It's It's",'Debris','no way','At The End','Antibiotics'],
     why: 'From their recent setlists',
@@ -188,12 +195,16 @@ const CATALOG = {
     extra: ['Sever','Fading','For You the Moon','Yoke','Canada Square','Breathe','Disconnect','Oversized','Be Here Now','Plan to Be Surprised','Nothing Left','Stigmata','Reason for Breathing','Grayscale','Jet','Blinded Bye','Every Single Word','Hanging Around','New Coast','Keepsake','March','Black','Ultraviolet','Changing Lanes','Skip Town','Wish','1104 Porter St.','Comfort','DUI','White Elephant','Lose Your Grip','Meet Me in St. Louis','Control','Ellipses','Further Sky','School (Nirvana cover)']
   }
 };
-const DEFAULT_SHOW = () => ({
-  id: 'show-2026-11-04-liberty-hall',
-  date: '2026-11-04', venue: 'Liberty Hall', city: 'Lawrence, KS',
-  acts: ['Lowertown','Big Boy','High Vis','Basement'].map((n,i)=>({id:'a'+(i+1), name:n})),
-  actIdx: 0, items: [], newestFirst: true, ended: false
-});
+// Shows that come preloaded. Acts with a `set` are one band playing several sets.
+const PRESETS = () => [
+  { id: 'show-2026-11-03-midland', date: '2026-11-03', venue: 'The Midland Theatre', city: 'Kansas City, MO',
+    acts: [{id:'g1', name:'Goose', set:'Set 1'}, {id:'g2', name:'Goose', set:'Set 2'}, {id:'g3', name:'Goose', set:'Encore'}],
+    actIdx: 0, items: [], newestFirst: true, ended: false },
+  { id: 'show-2026-11-04-liberty-hall', date: '2026-11-04', venue: 'Liberty Hall', city: 'Lawrence, KS',
+    acts: ['Lowertown','Big Boy','High Vis','Basement'].map((n,i)=>({id:'a'+(i+1), name:n})),
+    actIdx: 0, items: [], newestFirst: true, ended: false }
+];
+const localDay = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const CLIP_MS = 20000, VOICE_MAX_MS = 15000, HOLD_MS = 520, SWIPE_PX = 110;
 
 /* ---------- storage (IndexedDB) ---------- */
@@ -215,14 +226,16 @@ const DB = (() => {
   };
 })();
 let saveT;
-function save(){ clearTimeout(saveT); saveT = setTimeout(() => DB.put('kv','show', S.show).catch(err => toast('Couldn’t save to this phone: ' + err.message)), 150); }
-function saveNow(){ clearTimeout(saveT); return DB.put('kv','show', S.show); }
+function persist(){ return Promise.all([DB.put('kv','shows', S.shows), DB.put('kv','currentId', S.show.id)]); }
+function save(){ clearTimeout(saveT); saveT = setTimeout(() => persist().catch(err => toast('Couldn’t save to this phone: ' + err.message)), 150); }
+function saveNow(){ clearTimeout(saveT); return persist(); }
 
 /* ---------- state ---------- */
-const S = { show: null, view: 'capture', sheet: null, toast: null, holding: false, swipe: null, wake: null, micOk: null };
+const S = { shows: [], show: null, view: 'capture', sheet: null, toast: null, holding: false, swipe: null, wake: null, micOk: null };
 const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
 const act = () => S.show.acts[S.show.actIdx];
 const actById = id => S.show.acts.find(a => a.id === id);
+const actLabel = a => a ? (a.set ? `${a.name} · ${a.set}` : a.name) : 'Unknown act';
 const fmtTime = ts => new Date(ts).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}).replace(' ', ' ').toLowerCase();
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const cat = name => CATALOG[name] || null;
@@ -315,29 +328,37 @@ function toast(text, undo){
 }
 
 /* ---------- song picker logic ---------- */
-function pickerData(actName, q, forItemId){
-  const c = cat(actName);
-  const played = new Set(S.show.items.filter(i=>i.title && i.actId === (actByName(actName)||{}).id && i.id !== forItemId).map(i=>i.title));
+function pickerData(a, q, forItemId){
+  const c = cat(a.name);
+  const band = new Set(S.show.acts.filter(x => x.name === a.name).map(x => x.id)); // every set by this band
+  const logged = orderedItems().filter(i => i.title && band.has(i.actId) && i.id !== forItemId);
+  const played = new Set(logged.map(i => i.title));
   const ql = (q||'').trim().toLowerCase();
   if (!c) return { likely: [], all: [], played };
-  const all = Array.from(new Set([...c.tour, ...c.extra])).sort((a,b)=>a.localeCompare(b, undefined, {numeric:true}));
+  const all = Array.from(new Set([...c.tour, ...c.extra])).sort((x,y)=>x.localeCompare(y, undefined, {numeric:true}));
   if (ql) return { likely: [], all: all.filter(t => t.toLowerCase().includes(ql)), played };
-  // Likely: tour order, starting after the last song logged for this act
-  const actObj = actByName(actName);
-  const logged = S.show.items.filter(i => i.actId === actObj?.id && i.title && i.id !== forItemId).sort((a,b)=>a.pos-b.pos);
-  const last = logged.length ? c.tour.indexOf(logged[logged.length-1].title) : -1;
+  // Bands with a steady setlist: tour order, starting after the last song logged.
+  // Bands that change it nightly (rotate: false): most-played order, minus what's been played.
+  const last = c.rotate === false || !logged.length ? -1 : c.tour.indexOf(logged[logged.length-1].title);
   const rotated = last >= 0 ? [...c.tour.slice(last+1), ...c.tour.slice(0, last+1)] : c.tour;
-  const likely = rotated.filter(t => !played.has(t)).slice(0, 8).map((t,i) => ({ t, next: i===0 && last>=0 }));
+  const likely = rotated.filter(t => !played.has(t)).slice(0, c.likelyCount || 8).map((t,i) => ({ t, next: i===0 && last>=0 }));
   return { likely, all, played, why: c.why };
 }
-function actByName(n){ return S.show.acts.find(a=>a.name===n); }
+
 
 /* ---------- setlist text ---------- */
 function setlistText(){
-  const out = [];
-  for (const a of S.show.acts){
-    const its = orderedItems().filter(i=>i.actId===a.id); if (!its.length) continue;
-    out.push(a.name); its.forEach((it,i) => out.push((i+1) + '. ' + (it.title || '(unidentified, clip ' + fmtTime(it.ts) + ')')));
+  const out = [], its = orderedItems(), acts = S.show.acts;
+  for (let i = 0; i < acts.length; ){
+    const band = acts[i].name, group = [];
+    while (i < acts.length && acts[i].name === band) group.push(acts[i++]); // consecutive sets by one band
+    const parts = group.map(a => [a, its.filter(x => x.actId === a.id)]).filter(([, l]) => l.length);
+    if (!parts.length) continue;
+    out.push(band); let n = 0;
+    for (const [a, l] of parts){
+      if (a.set && group.length > 1) out.push(a.set + ':');
+      l.forEach(it => out.push((++n) + '. ' + (it.title || '(unidentified, clip ' + fmtTime(it.ts) + ')')));
+    }
     out.push('');
   }
   return out.join('\n').trim() || 'Nothing captured yet.';
@@ -354,7 +375,7 @@ function stepperHTML(){
   return `<div class="stepper">
     <div class="steprow">
       <button class="nav" data-a="prev" aria-label="Previous act" ${s.actIdx===0?'disabled':''}>${I.back}</button>
-      <button class="act" data-a="bill"><span class="eyebrow">Act ${s.actIdx+1} of ${n} · on stage</span><span class="name">${esc(act().name)}</span></button>
+      <button class="act" data-a="bill"><span class="eyebrow">${act().set ? `On stage · ${s.actIdx+1} of ${n}` : `Act ${s.actIdx+1} of ${n} · on stage`}</span><span class="name">${esc(actLabel(act()))}</span></button>
       <button class="nav" data-a="next" aria-label="Next act" ${s.actIdx===n-1?'disabled':''}>${I.next}</button>
     </div>
     <div class="dots">${s.acts.map((a,i)=>`<span class="${i===s.actIdx?'now':i<s.actIdx?'past':''}"></span>`).join('')}</div>
@@ -364,7 +385,7 @@ function renderCapture(){
   const s = S.show, recording = s.items.some(i=>i.recording);
   const top = `<div class="top">
     <button class="tbtn" data-a="toSetlist">Setlist</button>
-    <div class="where">${esc(s.venue)}<br>${new Date(s.date+'T12:00').toLocaleDateString([], {month:'short', day:'numeric'})}</div>
+    <button class="where" data-a="shows" aria-label="Switch show. Now: ${esc(s.venue)}">${esc(s.venue)}<br>${new Date(s.date+'T12:00').toLocaleDateString([], {month:'short', day:'numeric'})} ▾</button>
     <button class="tbtn" data-a="endShow">End show</button>
   </div>`;
   const label = recording ? `Listening…<span class="sub">20 sec clip</span>` : (S.holding ? 'Keep holding…' : 'Tap when a<br>song starts');
@@ -400,8 +421,8 @@ function renderCapture(){
 }
 function rowHTML(it, n){
   const a = actById(it.actId);
-  const label = it.recording ? `<span class="recdot"></span>Listening… 20 sec` : esc(fmtTime(it.ts) + ' · ' + (it.title || (a ? a.name : 'Unknown act')));
-  const meta = it.recording ? esc(a ? a.name : '') : esc([it.manual ? 'Manually entered' : (it.clipId ? 'Clip saved' : (it.clipErr || '')), it.voiceId ? 'voice note' : '', it.note ? '“' + it.note + '”' : ''].filter(Boolean).join(' · ') || 'No note');
+  const label = it.recording ? `<span class="recdot"></span>Listening… 20 sec` : esc(fmtTime(it.ts) + ' · ' + (it.title || actLabel(a)));
+  const meta = it.recording ? esc(actLabel(a)) : esc([it.manual ? 'Manually entered' : (it.clipId ? 'Clip saved' : (it.clipErr || '')), it.voiceId ? 'voice note' : '', it.note ? '“' + it.note + '”' : ''].filter(Boolean).join(' · ') || 'No note');
   const hasNote = it.note || it.voiceId;
   return `<div class="row${it.recording?' rec':''}" data-id="${it.id}">
     <div class="bg">${I.trash}<span>Remove</span></div>
@@ -418,14 +439,14 @@ function renderSetlist(){
   const unk = its.filter(i=>!i.title).length;
   const groups = s.acts.map(a => {
     const list = its.filter(i=>i.actId===a.id); if (!list.length) return '';
-    return `<h3>${esc(a.name)}</h3>` + list.map((it,i)=>`<button class="srow" data-a="item" data-id="${it.id}">
+    return `<h3>${esc(actLabel(a))}</h3>` + list.map((it,i)=>`<button class="srow" data-a="item" data-id="${it.id}">
       <span class="mono" style="width:22px;flex:none;font-size:13px;color:var(--muted)">${i+1}</span>
       <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="t">${esc(it.title || 'Song ' + (i+1) + '?')}</span>
       <span class="m">${esc([fmtTime(it.ts), it.manual?'manually entered':(it.clipId?'clip saved':(it.clipErr||'')), it.note?'“'+it.note+'”':'', it.voiceId?'voice note':''].filter(Boolean).join(' · '))}</span></span>
       <span class="pill${it.title?'':' need'}">${it.title?(it.manual?'You picked':'Set'):'Name it'}</span></button>`).join('');
   }).join('');
   app.innerHTML = `<div class="view">
-    <div class="top"><button class="tbtn" data-a="toCapture">${I.back} Back to show</button><span></span></div>
+    <div class="top"><button class="tbtn" data-a="toCapture">${I.back} Back to show</button><button class="tbtn" data-a="shows">Shows</button></div>
     <div class="sl">
       <h1>${esc(s.venue)} · ${new Date(s.date+'T12:00').toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'})}</h1>
       <div class="summary">${its.length} song${its.length===1?'':'s'}${unk ? ' · ' + unk + ' still to name' : ''} · tap any song to edit</div>
@@ -450,6 +471,7 @@ function renderLayer(){
     else if (sh.type === 'bill') h += billHTML();
     else if (sh.type === 'item') h += itemHTML(sh);
     else if (sh.type === 'end') h += endHTML();
+    else if (sh.type === 'shows') h += showsHTML();
     else if (sh.type === 'reset') h += `<div class="scrim" data-a="closeSheet"><div class="sheet" data-stop><div class="pad"><h2>Clear all ${S.show.items.length} captures?</h2><p>This deletes every capture, clip and note on this phone and keeps the bill. Save your clips first if you want them. This can’t be undone.</p><div class="two"><button class="wide" data-a="closeSheet">Keep them</button><button class="wide solid" data-a="doReset">Clear all</button></div></div></div></div>`;
   }
   if (S.toast) h += `<div class="toast" role="status"><span>${esc(S.toast.text)}</span>${S.toast.undo?'<button data-a="toastUndo">Undo</button>':''}</div>`;
@@ -461,13 +483,13 @@ function renderLayer(){
 function pickerHTML(sh){
   const editing = sh.itemId ? S.show.items.find(i=>i.id===sh.itemId) : null;
   const a = editing ? actById(editing.actId) : act();
-  const d = pickerData(a.name, sh.q, sh.itemId);
+  const d = pickerData(a, sh.q, sh.itemId);
   const n = editing ? orderedItems().filter(i=>i.actId===a.id).indexOf(editing) + 1 : S.show.items.filter(i=>i.actId===a.id).length + 1;
   const q = (sh.q||'').trim();
   const exact = q && d.all.some(t=>t.toLowerCase()===q.toLowerCase());
   return `<div class="scrim" data-a="closeSheet"><div class="sheet tall" data-stop>
     <div class="sh-head">
-      <div class="sh-title"><div><div class="eyebrow">Song ${n} · ${esc(a.name)}</div><h2>Which song ${editing?'was':'is'} it?</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div>
+      <div class="sh-title"><div><div class="eyebrow">Song ${n} · ${esc(actLabel(a))}</div><h2>Which song ${editing?'was':'is'} it?</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div>
       <label class="search">${I.search}<input id="q" type="search" autocomplete="off" placeholder="Search ${esc(a.name)} songs" value="${esc(sh.q||'')}" aria-label="Search songs"></label>
     </div>
     <div class="sh-body">
@@ -497,14 +519,14 @@ function billHTML(){
     <div class="sh-head"><div class="sh-title"><div><div class="eyebrow">Tonight’s bill · in order</div><h2>Who’s playing</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div></div>
     <div class="sh-body acts-edit">
       ${s.acts.map((a,i)=>`<div class="arow">
-        <button class="wide${i===s.actIdx?' solid':''}" style="width:auto;flex:1;justify-content:flex-start;padding:0 14px" data-a="goAct" data-i="${i}">${i+1}. ${esc(a.name)}${i===s.actIdx?' · on now':''}</button>
+        <button class="wide${i===s.actIdx?' solid':''}" style="width:auto;flex:1;justify-content:flex-start;padding:0 14px" data-a="goAct" data-i="${i}">${i+1}. ${esc(actLabel(a))}${i===s.actIdx?' · on now':''}</button>
         <button class="mini" data-a="actUp" data-i="${i}" ${i===0?'disabled':''} aria-label="Move ${esc(a.name)} earlier">${I.up}</button>
         <button class="mini" data-a="actDown" data-i="${i}" ${i===s.acts.length-1?'disabled':''} aria-label="Move ${esc(a.name)} later">${I.down}</button>
         <button class="mini" data-a="actRename" data-i="${i}" aria-label="Rename ${esc(a.name)}">Aa</button>
         <button class="mini" data-a="actRemove" data-i="${i}" aria-label="Remove ${esc(a.name)}" ${s.items.some(it=>it.actId===a.id)||s.acts.length===1?'disabled':''}>${I.trash}</button>
       </div>`).join('')}
-      ${S.renaming!=null ? `<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px"><input class="field" id="actname" value="${esc(S.renaming>=0?s.acts[S.renaming].name:'')}" placeholder="Band name" aria-label="Band name"><button class="wide solid" data-a="actSave">${S.renaming>=0?'Rename':'Add act'}</button></div>` : `<button class="wide" style="margin-top:14px" data-a="actAdd">+ Add an act</button>`}
-      <p class="note" style="margin-top:14px">Song lists are loaded for Lowertown, Big Boy, High Vis and Basement, plus First Day Back in case the opener changes (rename the act to switch). Any act without a list still works; you just type the titles.</p>
+      ${S.renaming!=null ? `<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px"><input class="field" id="actname" value="${esc(S.renaming>=0?s.acts[S.renaming].name:'')}" placeholder="Band name" aria-label="Band name">${S.renaming>=0 && s.acts[S.renaming].set ? `<input class="field" id="actset" value="${esc(s.acts[S.renaming].set)}" placeholder="Set name, like Set 2 or Encore" aria-label="Set name">` : ''}<button class="wide solid" data-a="actSave">${S.renaming>=0?'Save':'Add act'}</button></div>` : `<div style="display:flex;flex-direction:column;gap:8px;margin-top:14px"><button class="wide" data-a="actAdd">+ Add an act</button><button class="wide" data-a="actAddSet">+ Add another set for ${esc(act().name)}</button></div>`}
+      <p class="note" style="margin-top:14px">${(() => { const have = [...new Set(s.acts.map(a=>a.name))].filter(n => cat(n)); return have.length ? 'Song lists loaded for ' + esc(have.join(', ')) + '. ' : ''; })()}Any act without a list still works; you just type the titles.</p>
     </div>
   </div></div>`;
 }
@@ -513,7 +535,7 @@ function itemHTML(sh){
   const list = orderedItems(), idx = list.indexOf(it);
   const sameAct = list.filter(i=>i.actId===it.actId), k = sameAct.indexOf(it);
   return `<div class="scrim" data-a="closeSheet"><div class="sheet" data-stop><div class="pad">
-    <div class="sh-title"><div><div class="eyebrow">${esc(actById(it.actId)?.name||'')} · ${fmtTime(it.ts)}</div><h2>${esc(it.title || 'Unnamed song')}</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div>
+    <div class="sh-title"><div><div class="eyebrow">${esc(actLabel(actById(it.actId)))} · ${fmtTime(it.ts)}</div><h2>${esc(it.title || 'Unnamed song')}</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div>
     ${it.note ? `<p>“${esc(it.note)}”</p>` : ''}
     <div class="two">
       ${it.clipId ? `<button class="wide" data-a="play" data-id="${it.id}">${I.wave} Play clip</button>` : ''}
@@ -524,7 +546,7 @@ function itemHTML(sh){
       <button class="wide" data-a="moveDown" data-id="${it.id}" ${k>=sameAct.length-1?'disabled style="opacity:.35"':''}>${I.down} Move down</button>
     </div>
     <div class="eyebrow" style="margin-top:4px">Played by</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px">${S.show.acts.map(a=>`<button class="chip${a.id===it.actId?' solid':''}" style="min-height:44px;${a.id===it.actId?'background:var(--fg);color:var(--bg)':''}" data-a="setAct" data-id="${it.id}" data-act="${a.id}">${esc(a.name)}</button>`).join('')}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${S.show.acts.map(a=>`<button class="chip${a.id===it.actId?' solid':''}" style="min-height:44px;${a.id===it.actId?'background:var(--fg);color:var(--bg)':''}" data-a="setAct" data-id="${it.id}" data-act="${a.id}">${esc(actLabel(a))}</button>`).join('')}</div>
     <button class="wide" data-a="remove" data-id="${it.id}" style="color:var(--rec);border-color:var(--rec)">${I.trash} Remove from setlist</button>
   </div></div></div>`;
 }
@@ -534,6 +556,40 @@ function endHTML(){
     <p>You’ll go to the setlist. Nothing is deleted, and you can go back to capturing if there’s an encore.</p>
     <div class="two"><button class="wide" data-a="closeSheet">Keep going</button><button class="wide solid" data-a="confirmEnd">End show</button></div>
   </div></div></div>`;
+}
+
+
+/* ---------- shows ---------- */
+function headliner(sh){ return sh.acts.length ? sh.acts[sh.acts.length-1].name : 'New show'; }
+function showsHTML(){
+  const list = S.shows.slice().sort((a,b) => a.date.localeCompare(b.date)), today = localDay();
+  const recording = S.show.items.some(i => i.recording);
+  return `<div class="scrim" data-a="closeSheet"><div class="sheet tall" data-stop>
+    <div class="sh-head"><div class="sh-title"><div><div class="eyebrow">Your shows</div><h2>Shows</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div></div>
+    <div class="sh-body">
+      ${list.map(x => { const n = x.items.length, cur = x.id === S.show.id;
+        const when = new Date(x.date+'T12:00').toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'}) + (x.date === today ? ' · tonight' : '');
+        return `<button class="opt" data-a="openShow" data-id="${x.id}" ${recording && !cur ? 'disabled style="opacity:.4"' : ''}>
+          <span style="min-width:0"><span class="t">${esc(headliner(x))}</span><br><span class="w">${esc(when)} · ${esc(x.venue)} · ${n} song${n===1?'':'s'}</span></span>
+          <span class="tag">${cur ? 'Open now' : 'Open'}</span></button>`; }).join('')}
+      ${recording ? '<p class="note" style="margin-top:12px">A clip is recording. Switch shows when it finishes.</p>' : ''}
+      ${S.newShow ? `<div style="display:flex;flex-direction:column;gap:10px;margin-top:20px">
+          <div class="eyebrow">New show</div>
+          <label class="note" for="ns-date">Date</label><input class="field" id="ns-date" type="date" value="${today}">
+          <label class="note" for="ns-venue">Venue</label><input class="field" id="ns-venue" placeholder="The Bottleneck" autocomplete="off">
+          <label class="note" for="ns-city">City</label><input class="field" id="ns-city" placeholder="Lawrence, KS" autocomplete="off">
+          <label class="note" for="ns-bands">Bands, in the order they play (one per line, headliner last)</label>
+          <textarea id="ns-bands" rows="4" placeholder="Opener&#10;Headliner"></textarea>
+          <button class="wide solid" data-a="createShow">Create show</button>
+          <p class="note">For a band that plays two sets, open the bill during the show and tap “Add another set.”</p>
+        </div>` : `<button class="wide" style="margin-top:18px" data-a="newShow">+ New show</button>`}
+    </div></div></div>`;
+}
+function openShow(id){
+  const x = S.shows.find(v => v.id === id); if (!x || x === S.show) { S.sheet = null; renderLayer(); return; }
+  S.show = x; S.sheet = null; S.newShow = false; S.spStatus = ''; S.spError = false;
+  S.view = x.ended ? 'setlist' : 'capture'; save(); render(); wake();
+  toast('Opened ' + headliner(x) + ', ' + new Date(x.date+'T12:00').toLocaleDateString([], {month:'short', day:'numeric'}));
 }
 
 /* ---------- capture button: tap vs hold ---------- */
@@ -607,7 +663,7 @@ async function exportClips(){
   const zip = new window.JSZip(); const folder = zip.folder('clips');
   let n = 0;
   for (const [i, it] of its.entries()){
-    const a = actById(it.actId)?.name || 'Unknown';
+    const a = actLabel(actById(it.actId));
     const base = String(i+1).padStart(2,'0') + ' ' + a.replace(/[^\w ]+/g,'') + ' ' + fmtTime(it.ts).replace(/[:  ]/g,'');
     const row = { order: i+1, act: a, time: new Date(it.ts).toISOString(), title: it.title, manuallyEntered: it.manual, note: it.note || null, clip: null, voiceNote: null };
     if (it.clipId){ const b = await DB.get('clips', it.clipId).catch(()=>null); if (b){ row.clip = 'clips/' + base + '.' + extFor(b.type); folder.file(base + '.' + extFor(b.type), b); n++; } }
@@ -640,7 +696,15 @@ document.addEventListener('click', async e => {
     case 'actUp': case 'actDown': { const i = +el.dataset.i, j = a==='actUp'?i-1:i+1; const cur = act(); [s.acts[i], s.acts[j]] = [s.acts[j], s.acts[i]]; s.actIdx = s.acts.indexOf(cur); save(); render(); break; }
     case 'actRename': S.renaming = +el.dataset.i; renderLayer(); document.getElementById('actname')?.focus(); break;
     case 'actAdd': S.renaming = -1; renderLayer(); document.getElementById('actname')?.focus(); break;
-    case 'actSave': { const v = document.getElementById('actname').value.trim(); if (!v) break; if (S.renaming>=0) s.acts[S.renaming].name = v; else s.acts.push({id:'a'+uid(), name:v}); S.renaming = null; save(); render(); break; }
+    case 'actSave': { const v = document.getElementById('actname').value.trim(); if (!v) break;
+      if (S.renaming>=0) { const a0 = s.acts[S.renaming]; if (a0.name !== v) s.items.forEach(i => { if (i.actId === a0.id) i.sp = undefined; }); a0.name = v; const st = document.getElementById('actset'); if (st && st.value.trim()) a0.set = st.value.trim(); }
+      else s.acts.push({id:'a'+uid(), name:v});
+      S.renaming = null; save(); render(); break; }
+    case 'actAddSet': { const cur = act(), same = s.acts.filter(a => a.name === cur.name);
+      if (!cur.set) cur.set = 'Set 1';
+      const n = same.filter(a => /^Set \d+$/.test(a.set || '')).length + 1;
+      const at = s.acts.indexOf(same[same.length-1]) + 1;
+      s.acts.splice(at, 0, { id: 'a'+uid(), name: cur.name, set: 'Set ' + n }); save(); render(); break; }
     case 'actRemove': { const i = +el.dataset.i; const cur = act(); s.acts.splice(i,1); s.actIdx = Math.max(0, s.acts.indexOf(cur)); if (s.actIdx<0) s.actIdx = 0; save(); render(); break; }
     case 'flip': s.newestFirst = !s.newestFirst; save(); render(); break;
     case 'undoLast': { const last = s.items.slice().sort((x,y)=>y.ts-x.ts)[0]; if (last) removeItem(last.id); break; }
@@ -665,6 +729,16 @@ document.addEventListener('click', async e => {
     case 'remove': S.sheet = null; removeItem(id); break;
     case 'copy': { const txt = setlistText(); try { await navigator.clipboard.writeText(txt); toast('Setlist copied. Paste it into setlist.fm.'); } catch(_){ const r = document.createRange(); r.selectNodeContents(document.getElementById('sltext')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast('Text selected. Use your phone’s Copy.'); } break; }
     case 'exportClips': exportClips(); break;
+    case 'shows': S.newShow = false; S.sheet = {type:'shows'}; renderLayer(); break;
+    case 'openShow': openShow(id); break;
+    case 'newShow': S.newShow = true; renderLayer(); document.getElementById('ns-venue')?.focus(); break;
+    case 'createShow': {
+      const v = k => (document.getElementById(k)?.value || '').trim();
+      const bands = v('ns-bands').split('\n').map(x => x.trim()).filter(Boolean);
+      if (!v('ns-venue') || !bands.length || !/^\d{4}-\d{2}-\d{2}$/.test(v('ns-date'))) { toast('Add a date, a venue and at least one band.'); break; }
+      const x = { id: 'show-' + v('ns-date') + '-' + uid(), date: v('ns-date'), venue: v('ns-venue'), city: v('ns-city'),
+        acts: bands.map(n => ({ id: 'a' + uid(), name: n })), actIdx: 0, items: [], newestFirst: true, ended: false };
+      S.shows.push(x); S.newShow = false; openShow(x.id); break; }
     case 'toSpotify': S.view = 'spotify'; S.spStatus = ''; S.spError = false; render(); break;
     case 'copyUri': { try { await navigator.clipboard.writeText(SPOT.redirectUri()); toast('Redirect URI copied.'); } catch(_){ toast('Press and hold the address to copy it.'); } break; }
     case 'saveCid': { const v = (document.getElementById('cid')?.value || '').trim(); if (!/^[a-f0-9]{32}$/i.test(v)) { S.spError = true; S.spStatus = 'That doesn’t look like a Client ID. It’s 32 letters and numbers from your app’s settings.'; render(); break; } SPOT.setClientId(v); S.spError = false; S.spStatus = ''; render(); break; }
@@ -737,7 +811,7 @@ function renderSpotify(){
   else conn = `<p class="note">Spotify connected · <button class="linkbtn" data-a="spDisconnect">Disconnect</button></p>`;
   const rows = s.acts.filter(a => !c.offActs.includes(a.id)).map(a => {
     const list = songs.filter(i => i.actId === a.id); if (!list.length) return '';
-    return `<h3>${esc(a.name)}</h3>` + list.map(it => `<div class="sprow${it.spOff?' off':''}" data-id="${it.id}">
+    return `<h3>${esc(actLabel(a))}</h3>` + list.map(it => `<div class="sprow${it.spOff?' off':''}" data-id="${it.id}">
       <input type="checkbox" id="inc-${it.id}" data-a="spToggle" data-id="${it.id}" ${it.spOff?'':'checked'} aria-label="Include ${esc(it.title)}">
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
         <input class="sptitle" id="t-${it.id}" data-id="${it.id}" value="${esc(it.title)}" aria-label="Song title" autocomplete="off" spellcheck="false">
@@ -769,7 +843,7 @@ function renderSpotify(){
       <input class="field" id="plname" style="margin-top:6px" value="${esc(c.name || spDefaultName())}" autocomplete="off">
       <div class="eyebrow" style="margin-top:16px">Acts to include</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">${s.acts.filter(a => orderedItems().some(i=>i.actId===a.id && i.title)).map(a => { const on = !c.offActs.includes(a.id), k = orderedItems().filter(i=>i.actId===a.id && i.title).length;
-        return `<button class="chip${on?' chipon':''}" style="min-height:44px" data-a="spAct" data-act="${a.id}" aria-pressed="${on}">${esc(a.name)} · ${k}</button>`; }).join('')}</div>
+        return `<button class="chip${on?' chipon':''}" style="min-height:44px" data-a="spAct" data-act="${a.id}" aria-pressed="${on}">${esc(actLabel(a))} · ${k}</button>`; }).join('')}</div>
       ${hasCover ? `<label class="note" style="display:flex;gap:10px;align-items:center;margin-top:14px;min-height:44px"><input type="checkbox" id="preforig" data-a="spPref" ${c.preferOriginal?'checked':''} style="width:20px;height:20px"> Use the original artist’s version of covers</label>` : ''}
       ${rows || '<p class="note" style="margin-top:20px">No named songs yet. Name your songs on the setlist first.</p>'}
       ${unnamed ? `<p class="note" style="margin-top:14px">${unnamed} unnamed song${unnamed===1?' is':'s are'} left out. Name ${unnamed===1?'it':'them'} on the setlist to include ${unnamed===1?'it':'them'}.</p>` : ''}
@@ -835,8 +909,17 @@ document.addEventListener('change', e => {
 
 /* ---------- boot ---------- */
 (async function boot(){
-  try { S.show = await DB.get('kv','show'); } catch(e){ S.show = null; }
-  if (!S.show) { S.show = DEFAULT_SHOW(); save(); }
+  // Load every show. Older versions stored one show under 'show'; keep it.
+  let shows = null, cur = null, lastDay = null;
+  try { shows = await DB.get('kv','shows'); cur = await DB.get('kv','currentId'); lastDay = await DB.get('kv','lastDay'); } catch(e){}
+  if (!Array.isArray(shows)) { shows = []; try { const old = await DB.get('kv','show'); if (old) shows.push(old); } catch(e){} }
+  for (const p of PRESETS()) if (!shows.some(x => x.id === p.id)) shows.push(p);
+  S.shows = shows;
+  // First open on a show day jumps to that day's show; otherwise reopen where you left off.
+  const today = localDay(), tonight = shows.find(x => x.date === today);
+  S.show = (lastDay !== today && tonight) || shows.find(x => x.id === cur) || tonight || shows.slice().sort((a,b)=>a.date.localeCompare(b.date)).find(x => x.date >= today) || shows[0];
+  DB.put('kv','lastDay', today).catch(()=>{});
+  save();
   // A clip that was recording when the app closed can't be finished.
   S.show.items.forEach(i => { if (i.recording) { i.recording = false; if (!i.clipId) i.clipErr = 'Recording cut off'; } });
   if (S.show.ended) S.view = 'setlist';
