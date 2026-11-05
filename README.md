@@ -1,4 +1,4 @@
-# Setlist Catcher
+# Setlist Buddy
 
 A phone web app for logging a concert setlist while you watch.
 
@@ -21,7 +21,7 @@ From the setlist screen, **Send to Spotify** matches every named song on Spotify
 
 One-time setup, reusing an existing Spotify developer app:
 1. In the Spotify developer dashboard, open the app and add this Redirect URI exactly: `https://titusmith.github.io/setlist-catcher/callback.html`
-2. In Setlist Catcher, open **Send to Spotify** and paste the app's Client ID.
+2. In Setlist Buddy, open **Send to Spotify** and paste the app's Client ID.
 3. Tap **Connect Spotify** and approve.
 
 Sign-in uses Authorization Code with PKCE (no client secret). Tokens live in this phone's browser storage and refresh automatically. Spotify's 2026 Development Mode rules apply: the app owner needs Premium, and every Spotify account that uses it must be listed under the app's User Management.

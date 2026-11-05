@@ -1,4 +1,4 @@
-// Spotify for Setlist Catcher: sign-in (Authorization Code with PKCE, no secret),
+// Spotify for Setlist Buddy: sign-in (Authorization Code with PKCE, no secret),
 // track matching, and playlist creation. Uses the Web API as it stands after
 // Spotify's February 2026 changes: POST /me/playlists, POST and PUT
 // /playlists/{id}/items, and search with limit <= 10.

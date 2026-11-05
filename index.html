@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#0F1012">
-<title>Setlist Catcher</title>
+<title>Setlist Buddy</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -211,6 +211,7 @@ const CLIP_MS = 20000, VOICE_MAX_MS = 15000, HOLD_MS = 520, SWIPE_PX = 110;
 const DB = (() => {
   let p;
   const open = () => p || (p = new Promise((res, rej) => {
+    // Storage keeps its original name so shows saved before the rename to Setlist Buddy stay put.
     const r = indexedDB.open('setlist-catcher', 1);
     r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('kv'); d.createObjectStore('clips'); };
     r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
@@ -657,7 +658,7 @@ function bindVoice(){
 /* ---------- export ---------- */
 async function exportClips(){
   const its = orderedItems();
-  const meta = { app: 'Setlist Catcher', exported: new Date().toISOString(), show: { date: S.show.date, venue: S.show.venue, city: S.show.city, acts: S.show.acts.map(a=>a.name) }, songs: [] };
+  const meta = { app: 'Setlist Buddy', exported: new Date().toISOString(), show: { date: S.show.date, venue: S.show.venue, city: S.show.city, acts: S.show.acts.map(a=>a.name) }, songs: [] };
   if (!window.JSZip) { toast('The zip tool didn’t load. Open the app once with signal, then try again.'); return; }
   toast('Packing clips…');
   const zip = new window.JSZip(); const folder = zip.folder('clips');
@@ -887,7 +888,7 @@ async function spCreate(){
   const name = (document.getElementById('plname')?.value || '').trim() || c.name || spDefaultName();
   S.spError = false; S.spStatus = ''; S.spBusy = 'Creating playlist…'; spRerender();
   try {
-    const pl = await SPOT.createPlaylist({ name, description: `Setlist from ${S.show.venue}, ${S.show.city}, ${longDate(S.show.date)}. Made with Setlist Catcher.`, uris });
+    const pl = await SPOT.createPlaylist({ name, description: `Setlist from ${S.show.venue}, ${S.show.city}, ${longDate(S.show.date)}. Made with Setlist Buddy.`, uris });
     c.playlist = { id: pl.id, url: pl.url, uris, created: Date.now() }; c.name = name;
     S.spBusy = null; S.spStatus = `Created a private playlist with ${uris.length} songs.`; save(); spRerender();
   } catch (e) { spFail(e); }
