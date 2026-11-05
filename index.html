@@ -113,8 +113,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .pad p{margin:0;font-size:14px;color:var(--muted);line-height:1.45}
 textarea,.field{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line-strong);background:var(--bg);color:var(--fg);font-family:inherit;font-size:16px;line-height:1.4;resize:none}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.voice{min-height:64px;border-radius:14px;border:none;background:var(--fg);color:var(--bg);font-size:15px;font-weight:600;touch-action:none}
-.voice.on{background:var(--rec);color:#120807}
 
 /* setlist view */
 .sl{flex:1;min-height:0;overflow-y:auto;padding:0 20px 20px}
@@ -149,6 +147,20 @@ textarea,.field{width:100%;padding:12px 14px;border-radius:10px;border:1px solid
 .sps.found{color:var(--ok)}.sps.check{color:var(--warn)}.sps.miss{color:var(--rec)}
 .spfoot{padding:12px 20px 16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;background:var(--bg)}
 .spfoot .spstatus{margin:0;min-height:1em}.spfoot .spstatus:empty{display:none}.spstatus.err{color:var(--rec)}
+.flagbtn{width:40px;height:40px;flex:none;border:none;background:transparent;color:var(--faint);display:flex;align-items:center;justify-content:center;border-radius:10px}
+.flagbtn.on{color:var(--fg)}.flagbtn.on svg{fill:currentColor}
+.tl-head .right{display:flex;align-items:center;gap:4px}
+.sl h3.acth{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:0}
+.sl h3.acth a,.sl h3.acth .m{font-family:var(--sans);font-size:12px;letter-spacing:0;text-transform:none;color:var(--muted)}
+.setlabel{margin:10px 0 0;font-size:12px;color:var(--muted)}
+.gapline{display:flex;align-items:center;gap:10px;padding:12px 0;color:var(--muted);font-size:12px}
+.gapline::before,.gapline::after{content:"";flex:1;border-top:1px dashed var(--line-strong)}
+.pill.ok{color:var(--ok);border-color:rgba(123,216,143,.45)}
+.pill.warn{color:var(--warn);border-color:rgba(240,180,90,.55)}
+.srow.off .t{color:var(--faint);text-decoration:line-through}
+.srow .sug{color:var(--muted)}
+.card .row2{display:flex;gap:8px;flex-wrap:wrap}
+.card .row2 .wide{flex:1;width:auto;min-width:140px}
 a.wide{text-decoration:none;color:inherit}a.wide.solid{color:var(--bg)}
 .wide[disabled]{opacity:.55}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -205,7 +217,7 @@ const PRESETS = () => [
     actIdx: 0, items: [], newestFirst: true, ended: false }
 ];
 const localDay = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-const CLIP_MS = 20000, VOICE_MAX_MS = 15000, HOLD_MS = 520, SWIPE_PX = 110;
+const CLIP_MS = 20000, HOLD_MS = 520, SWIPE_PX = 110;
 
 /* ---------- storage (IndexedDB) ---------- */
 const DB = (() => {
@@ -232,7 +244,7 @@ function save(){ clearTimeout(saveT); saveT = setTimeout(() => persist().catch(e
 function saveNow(){ clearTimeout(saveT); return persist(); }
 
 /* ---------- state ---------- */
-const S = { shows: [], show: null, view: 'capture', sheet: null, toast: null, holding: false, swipe: null, wake: null, micOk: null };
+const S = { shows: [], show: null, view: 'capture', sheet: null, toast: null, holding: false, swipe: null, wake: null, micOk: null, settings: {} };
 const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
 const act = () => S.show.acts[S.show.actIdx];
 const actById = id => S.show.acts.find(a => a.id === id);
@@ -257,6 +269,9 @@ const I = {
   search:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
   trash:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
   up:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
+  pen:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4"/></svg>',
+  flag:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4h11l-1.5 4L16 12H5"/></svg>',
+  gear:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   down:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'
 };
 
@@ -311,7 +326,7 @@ function capture(){
   if (navigator.vibrate) navigator.vibrate(30);
 }
 function addManual(title, editId){
-  if (editId) { const it = S.show.items.find(i=>i.id===editId); if (it){ if (it.title !== title) it.sp = undefined; it.title = title; it.manual = true; it.picked = true; } }
+  if (editId) { const it = S.show.items.find(i=>i.id===editId); if (it){ if (it.title !== title) it.sp = undefined; it.title = title; it.manual = true; it.picked = true; it.from = null; it.sugOff = false; } }
   else S.show.items.push({ id: uid(), ts: Date.now(), actId: act().id, pos: nextPos(), title, manual: true, note: '', voiceId: null, clipId: null });
   S.sheet = null; save(); render();
 }
@@ -323,9 +338,9 @@ function removeItem(id){
   toast('Removed ' + (it.title ? '“' + it.title + '”' : 'that capture'), () => { S.show.items.push(it); save(); render(); });
   render();
 }
-function toast(text, undo){
-  clearTimeout(S.toastT); S.toast = {text, undo};
-  S.toastT = setTimeout(() => { S.toast = null; renderLayer(); }, undo ? 5000 : 4000); renderLayer();
+function toast(text, undo, label){
+  clearTimeout(S.toastT); S.toast = {text, undo, label};
+  S.toastT = setTimeout(() => { S.toast = null; renderLayer(); }, undo ? (label ? 9000 : 5000) : 4000); renderLayer();
 }
 
 /* ---------- song picker logic ---------- */
@@ -360,6 +375,8 @@ function setlistText(){
       if (a.set && group.length > 1) out.push(a.set + ':');
       l.forEach(it => out.push((++n) + '. ' + (it.title || '(unidentified, clip ' + fmtTime(it.ts) + ')')));
     }
+    const p = S.show.posted && S.show.posted[band];
+    if (group.some(a => a.incomplete) && !(p && p.found)) out.push('(incomplete set)');
     out.push('');
   }
   return out.join('\n').trim() || 'Nothing captured yet.';
@@ -367,10 +384,10 @@ function setlistText(){
 
 /* ---------- render ---------- */
 const app = document.getElementById('app'), layer = document.getElementById('layer');
-function render(){
-  if (S.view === 'capture') renderCapture(); else if (S.view === 'setlist') renderSetlist(); else if (S.view === 'spotify') renderSpotify();
-  renderLayer();
+function renderView(){
+  if (S.view === 'capture') renderCapture(); else if (S.view === 'setlist') renderSetlist(); else if (S.view === 'spotify') renderSpotify(); else if (S.view === 'review') renderReview();
 }
+function render(){ renderView(); renderLayer(); }
 function stepperHTML(){
   const s = S.show, n = s.acts.length;
   return `<div class="stepper">
@@ -403,8 +420,8 @@ function renderCapture(){
     const nums = new Map(list.map((it,i)=>[it.id,i+1]));
     const shown = s.newestFirst ? list.slice().reverse() : list;
     body = `<div class="tl-head">
-        <span class="eyebrow">Tonight · ${list.length} song${list.length===1?'':'s'}</span>
-        <button class="chip" data-a="flip" aria-label="${s.newestFirst?'Newest first. Switch to oldest first':'Oldest first. Switch to newest first'}">${I.flip} ${s.newestFirst?'Newest first':'Oldest first'}</button>
+        <span class="eyebrow">Tonight · ${list.length} song${list.length===1?'':'s'}${act().incomplete ? ' · ' + esc(act().name) + ' incomplete' : ''}</span>
+        <span class="right">${flagBtn(act())}<button class="chip" data-a="flip" aria-label="${s.newestFirst?'Newest first. Switch to oldest first':'Oldest first. Switch to newest first'}">${I.flip} ${s.newestFirst?'Newest first':'Oldest first'}</button></span>
       </div>
       <div class="tl" id="tl">${shown.map(it => rowHTML(it, nums.get(it.id))).join('')}</div>
       <div class="dockbar">
@@ -420,15 +437,17 @@ function renderCapture(){
   if (!s.items.length) app.querySelector('.empty').insertAdjacentHTML('beforeend', '<div class="status" id="status" style="justify-self:auto;align-items:center"></div>');
   bindCap(); bindSwipes(); renderStatus();
 }
+function flagBtn(a){ return `<button class="flagbtn${a.incomplete?' on':''}" data-a="flagAct" data-act="${a.id}" aria-pressed="${!!a.incomplete}" aria-label="${a.incomplete ? 'Flagged incomplete: ' + esc(actLabel(a)) + '. Tap to clear' : 'Flag ' + esc(actLabel(a)) + ' as an incomplete set'}">${I.flag}</button>`; }
 function rowHTML(it, n){
   const a = actById(it.actId);
-  const label = it.recording ? `<span class="recdot"></span>Listening… 20 sec` : esc(fmtTime(it.ts) + ' · ' + (it.title || actLabel(a)));
-  const meta = it.recording ? esc(actLabel(a)) : esc([it.manual ? 'Manually entered' : (it.clipId ? 'Clip saved' : (it.clipErr || '')), it.voiceId ? 'voice note' : '', it.note ? '“' + it.note + '”' : ''].filter(Boolean).join(' · ') || 'No note');
+  const label = it.recording ? `<span class="recdot"></span>Listening… 20 sec` : esc((it.ts ? fmtTime(it.ts) : 'Missed') + ' · ' + (it.title || actLabel(a)));
+  const lh = !it.title && it.lyr && it.lyr.note === (it.note||'').trim() && it.lyr.hits[0];
+  const meta = it.recording ? esc(actLabel(a)) : esc([it.missed ? 'From setlist.fm' : it.manual ? 'Manually entered' : (it.clipId ? 'Clip saved' : (it.clipErr || '')), it.voiceId ? 'voice note' : '', it.note ? '“' + it.note + '”' : '', lh ? 'lyrics: ' + lh + '?' : ''].filter(Boolean).join(' · ') || 'No note');
   const hasNote = it.note || it.voiceId;
   return `<div class="row${it.recording?' rec':''}" data-id="${it.id}">
     <div class="bg">${I.trash}<span>Remove</span></div>
     <div class="fg"><span class="n">${n}</span><div class="body"><span class="label">${label}</span><span class="meta">${meta}</span></div>
-    <button class="ibtn${hasNote?' on':''}" data-a="note" data-id="${it.id}" aria-label="${hasNote?'Edit note':'Add a note'} for song ${n}">${I.mic}</button></div>
+    <button class="ibtn${hasNote?' on':''}" data-a="note" data-id="${it.id}" aria-label="${hasNote?'Edit note':'Add a note'} for song ${n}">${I.pen}</button></div>
   </div>`;
 }
 function renderStatus(){
@@ -436,27 +455,34 @@ function renderStatus(){
   el.innerHTML = `<span>Saved on phone</span><span>${S.wake ? 'Screen stays on' : 'Screen may sleep'}</span>`;
 }
 function renderSetlist(){
-  const s = S.show, its = orderedItems();
+  const s = S.show, its = orderedItems(), sug = analyzeAll();
   const unk = its.filter(i=>!i.title).length;
   const groups = s.acts.map(a => {
-    const list = its.filter(i=>i.actId===a.id); if (!list.length) return '';
-    return `<h3>${esc(actLabel(a))}</h3>` + list.map((it,i)=>`<button class="srow" data-a="item" data-id="${it.id}">
+    const list = its.filter(i=>i.actId===a.id); if (!list.length && !a.incomplete) return '';
+    return `<h3 class="acth"><span>${esc(actLabel(a))}</span>${flagBtn(a)}</h3>` + list.map((it,i)=>{ const g = !it.title && sug.get(it.id); const gt = g && g.title;
+      return `<button class="srow" data-a="item" data-id="${it.id}">
       <span class="mono" style="width:22px;flex:none;font-size:13px;color:var(--muted)">${i+1}</span>
-      <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="t">${esc(it.title || 'Song ' + (i+1) + '?')}</span>
-      <span class="m">${esc([fmtTime(it.ts), it.manual?'manually entered':(it.clipId?'clip saved':(it.clipErr||'')), it.note?'“'+it.note+'”':'', it.voiceId?'voice note':''].filter(Boolean).join(' · '))}</span></span>
-      <span class="pill${it.title?'':' need'}">${it.title?(it.manual?'You picked':'Set'):'Name it'}</span></button>`).join('');
+      <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="t${gt?' sug':''}">${esc(it.title || (gt ? gt + '?' : 'Song ' + (i+1) + '?'))}</span>
+      <span class="m">${esc([it.ts ? fmtTime(it.ts) : '', it.missed ? 'missed · from setlist.fm' : it.manual?'manually entered':(it.clipId?'clip saved':(it.clipErr||'')), it.note?'“'+it.note+'”':'', it.voiceId?'voice note':''].filter(Boolean).join(' · '))}</span></span>
+      <span class="pill${it.title?'':gt?'':' need'}">${it.title?(it.missed?'Added':it.manual?'You picked':'Named'):(gt?'Suggested':'Name it')}</span></button>`; }).join('')
+      + (a.incomplete ? `<div class="gapline">Incomplete set · some songs weren’t logged</div>` : '');
   }).join('');
+  const st = its.length ? reviewStats() : null;
+  const rv = st ? `<div class="card"><strong>${s.approvedAt ? 'Approved' : 'Ready to approve'}</strong>
+      <p class="note">${esc([st.named && st.named + ' name' + (st.named===1?'':'s') + ' suggested', st.added && st.added + ' missed song' + (st.added===1?'':'s') + ' from setlist.fm', st.check && st.check + ' to check'].filter(Boolean).join(' · ') || (s.approvedAt ? 'Nothing new since you approved.' : 'Check it against setlist.fm and send it to Spotify in one step.'))}</p>
+      <button class="wide solid" data-a="toReview">${s.approvedAt ? 'Review again' : 'Review and approve'}</button></div>` : '';
   app.innerHTML = `<div class="view">
-    <div class="top"><button class="tbtn" data-a="toCapture">${I.back} Back to show</button><button class="tbtn" data-a="shows">Shows</button></div>
+    <div class="top"><button class="tbtn" data-a="toCapture">${I.back} Back to show</button><span style="display:flex"><button class="tbtn" data-a="shows">Shows</button><button class="tbtn" data-a="settings" aria-label="Settings">${I.gear}</button></span></div>
     <div class="sl">
       <h1>${esc(s.venue)} · ${new Date(s.date+'T12:00').toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'})}</h1>
       <div class="summary">${its.length} song${its.length===1?'':'s'}${unk ? ' · ' + unk + ' still to name' : ''} · tap any song to edit</div>
+      ${rv}
       ${groups || '<p class="note" style="margin-top:20px">Nothing captured yet. Go back to the show and tap when a song starts.</p>'}
       <h3>For setlist.fm</h3>
       <div class="box" id="sltext">${esc(setlistText())}</div>
       <div class="actions">
-        <button class="wide solid" data-a="toSpotify">${s.sp && s.sp.playlist ? 'Spotify playlist' : 'Send to Spotify'}</button>
         <button class="wide" data-a="copy">Copy setlist</button>
+        <button class="wide" data-a="toSpotify">${s.sp && s.sp.playlist ? 'Spotify playlist' : 'Send to Spotify'}</button>
         <button class="wide" data-a="exportClips">Save clips + show file</button>
         <p class="note">Clips stay on this phone until you clear the browser’s site data. Save them once you’re home so they can be matched later.</p>
         <button class="wide" data-a="askReset" style="margin-top:12px;color:var(--muted)">Clear all captures and start over</button>
@@ -473,13 +499,21 @@ function renderLayer(){
     else if (sh.type === 'item') h += itemHTML(sh);
     else if (sh.type === 'end') h += endHTML();
     else if (sh.type === 'shows') h += showsHTML();
+    else if (sh.type === 'settings') h += settingsHTML();
+    else if (sh.type === 'missed') h += missedHTML(sh);
     else if (sh.type === 'reset') h += `<div class="scrim" data-a="closeSheet"><div class="sheet" data-stop><div class="pad"><h2>Clear all ${S.show.items.length} captures?</h2><p>This deletes every capture, clip and note on this phone and keeps the bill. Save your clips first if you want them. This can’t be undone.</p><div class="two"><button class="wide" data-a="closeSheet">Keep them</button><button class="wide solid" data-a="doReset">Clear all</button></div></div></div></div>`;
   }
-  if (S.toast) h += `<div class="toast" role="status"><span>${esc(S.toast.text)}</span>${S.toast.undo?'<button data-a="toastUndo">Undo</button>':''}</div>`;
+  if (S.toast) h += `<div class="toast" role="status"><span>${esc(S.toast.text)}</span>${S.toast.undo?`<button data-a="toastUndo">${esc(S.toast.label||'Undo')}</button>`:''}</div>`;
   const keepFocus = document.activeElement && document.activeElement.id === 'q' ? document.activeElement.selectionStart : null;
+  // Keep what's typed in a sheet when something else redraws it (a toast, a background match).
+  const ta = document.getElementById('notetext'), noteFocused = ta && document.activeElement === ta;
+  if (ta && sh && sh.type === 'note') sh.draft = ta.value;
+  const keepFields = {}; layer.querySelectorAll('input.field[id], textarea.field[id]').forEach(f => keepFields[f.id] = f.value);
   layer.innerHTML = h;
+  for (const [k, v] of Object.entries(keepFields)) { const f = document.getElementById(k); if (f && f.value !== v) f.value = v; }
+  if (noteFocused) { const t = document.getElementById('notetext'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }
   if (sh && sh.type === 'picker') { const q = document.getElementById('q'); if (q && (sh.focus || keepFocus !== null)) { q.focus(); if (keepFocus!==null) q.setSelectionRange(keepFocus, keepFocus); sh.focus = false; } }
-  if (sh && sh.type === 'note') bindVoice();
+  if (sh && sh.type === 'note' && sh.focus !== false) { const t = document.getElementById('notetext'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } sh.focus = false; }
 }
 function pickerHTML(sh){
   const editing = sh.itemId ? S.show.items.find(i=>i.id===sh.itemId) : null;
@@ -505,13 +539,9 @@ function noteHTML(sh){
   const it = S.show.items.find(i=>i.id===sh.itemId); if (!it) return '';
   return `<div class="scrim" data-a="closeSheet"><div class="sheet" data-stop><div class="pad">
     <div class="sh-title"><h2>Note for ${esc(it.title || 'song at ' + fmtTime(it.ts))}</h2><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div>
-    <p>A lyric, a title the band said, anything that helps you name it later.</p>
-    <textarea id="notetext" rows="3" placeholder="“…don’t let the river take…”">${esc(it.note)}</textarea>
-    <div class="two">
-      <button class="voice${S.voiceRec?' on':''}" id="voice">${S.voiceRec ? 'Recording… let go to stop' : (it.voiceId ? 'Hold to redo voice note' : 'Hold to speak')}</button>
-      ${it.voiceId ? `<button class="wide" data-a="playVoice" data-id="${it.id}">Play voice note</button>` : `<button class="wide" data-a="saveNote" data-id="${it.id}">Save note</button>`}
-    </div>
-    ${it.voiceId ? `<button class="wide solid" data-a="saveNote" data-id="${it.id}">Save note</button>` : ''}
+    <textarea id="notetext" rows="3" enterkeyhint="done" aria-label="Note" placeholder="A lyric you caught. Four or more words match best.">${esc(sh.draft ?? it.note)}</textarea>
+    ${it.voiceId ? `<button class="wide" data-a="playVoice" data-id="${it.id}">${I.mic} Play the voice note</button>` : ''}
+    <button class="wide solid" data-a="saveNote" data-id="${it.id}">Save note</button>
   </div></div></div>`;
 }
 function billHTML(){
@@ -535,9 +565,14 @@ function itemHTML(sh){
   const it = S.show.items.find(i=>i.id===sh.itemId); if (!it) return '';
   const list = orderedItems(), idx = list.indexOf(it);
   const sameAct = list.filter(i=>i.actId===it.actId), k = sameAct.indexOf(it);
+  const an = analyze(S.show, actById(it.actId)?.name || ''), row = an.rows.find(r => r.it === it), d = row ? describe({ type:'row', row, it }, an) : null;
+  const opts = !it.title && row && !it.sugOff ? [row.title, row.alt].filter(Boolean) : [];
   return `<div class="scrim" data-a="closeSheet"><div class="sheet" data-stop><div class="pad">
-    <div class="sh-title"><div><div class="eyebrow">${esc(actLabel(actById(it.actId)))} · ${fmtTime(it.ts)}</div><h2>${esc(it.title || 'Unnamed song')}</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div>
+    <div class="sh-title"><div><div class="eyebrow">${esc(actLabel(actById(it.actId)))} · ${it.ts ? fmtTime(it.ts) : 'from setlist.fm'}</div><h2>${esc(it.title || 'Unnamed song')}</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div>
     ${it.note ? `<p>“${esc(it.note)}”</p>` : ''}
+    ${d && (opts.length || d.pill === 'Check') ? `<p>${esc(d.sub.split(' · ').filter(x => !/\d:\d\d/.test(x)).join(' · '))}</p>` : ''}
+    ${opts.map((t,i) => `<button class="wide${i===0?' solid':''}" data-a="useSug" data-id="${it.id}" data-t="${esc(t)}" data-k="${i===0?row.kind:(an.ref.kind==='setlist'?'setlist':'tour')}">Use “${esc(t)}”</button>`).join('')}
+    ${opts.length ? `<button class="wide" data-a="sugOff" data-id="${it.id}">Leave it unnamed</button>` : (it.sugOff ? `<button class="wide" data-a="sugOn" data-id="${it.id}">Show suggestions again</button>` : '')}
     <div class="two">
       ${it.clipId ? `<button class="wide" data-a="play" data-id="${it.id}">${I.wave} Play clip</button>` : ''}
       ${it.voiceId ? `<button class="wide" data-a="playVoice" data-id="${it.id}">${I.mic} Voice note</button>` : ''}
@@ -584,6 +619,7 @@ function showsHTML(){
           <button class="wide solid" data-a="createShow">Create show</button>
           <p class="note">For a band that plays two sets, open the bill during the show and tap “Add another set.”</p>
         </div>` : `<button class="wide" style="margin-top:18px" data-a="newShow">+ New show</button>`}
+      <button class="wide" style="margin-top:8px" data-a="settings">${I.gear} Settings</button>
     </div></div></div>`;
 }
 function openShow(id){
@@ -630,31 +666,6 @@ function bindSwipes(){
   });
 }
 
-/* ---------- voice notes ---------- */
-let voice = null;
-function bindVoice(){
-  const b = document.getElementById('voice'); if (!b) return;
-  const ta = document.getElementById('notetext');
-  b.addEventListener('contextmenu', e => e.preventDefault());
-  b.addEventListener('pointerdown', async e => {
-    if (voice) return; try { b.setPointerCapture(e.pointerId); } catch(_){}
-    const draft = ta ? ta.value : '';
-    let stream; try { stream = await getMic(); } catch(err){ toast('Microphone is blocked, so type the note instead.'); return; }
-    const rec = new MediaRecorder(stream, MIME ? {mimeType: MIME} : undefined), chunks = [];
-    rec.ondataavailable = ev => ev.data.size && chunks.push(ev.data);
-    const it = S.show.items.find(i=>i.id===S.sheet.itemId);
-    rec.onstop = async () => { stream.getTracks().forEach(t=>t.stop()); voice = null; S.voiceRec = false;
-      const blob = new Blob(chunks, {type: rec.mimeType || 'audio/webm'});
-      if (blob.size > 2000 && it) { it.voiceId = 'v-' + it.id; it.voiceType = blob.type; await DB.put('clips', it.voiceId, blob).catch(()=>{}); }
-      if (it && draft !== undefined) it.note = draft.trim();
-      save(); render(); };
-    voice = rec; S.voiceRec = true; rec.start(); b.classList.add('on'); b.textContent = 'Recording… let go to stop';
-    voice.timer = setTimeout(() => rec.state !== 'inactive' && rec.stop(), VOICE_MAX_MS);
-  });
-  const stop = () => { if (voice && voice.state !== 'inactive') { clearTimeout(voice.timer); voice.stop(); } };
-  b.addEventListener('pointerup', stop); b.addEventListener('pointercancel', stop);
-}
-
 /* ---------- export ---------- */
 async function exportClips(){
   const its = orderedItems();
@@ -665,8 +676,8 @@ async function exportClips(){
   let n = 0;
   for (const [i, it] of its.entries()){
     const a = actLabel(actById(it.actId));
-    const base = String(i+1).padStart(2,'0') + ' ' + a.replace(/[^\w ]+/g,'') + ' ' + fmtTime(it.ts).replace(/[:  ]/g,'');
-    const row = { order: i+1, act: a, time: new Date(it.ts).toISOString(), title: it.title, manuallyEntered: it.manual, note: it.note || null, clip: null, voiceNote: null };
+    const base = String(i+1).padStart(2,'0') + ' ' + a.replace(/[^\w ]+/g,'') + ' ' + (it.ts ? fmtTime(it.ts).replace(/[:\u202f\u00a0 ]/g,'') : 'missed');
+    const row = { order: i+1, act: a, time: it.ts ? new Date(it.ts).toISOString() : null, title: it.title, manuallyEntered: it.manual, from: it.from || null, note: it.note || null, clip: null, voiceNote: null };
     if (it.clipId){ const b = await DB.get('clips', it.clipId).catch(()=>null); if (b){ row.clip = 'clips/' + base + '.' + extFor(b.type); folder.file(base + '.' + extFor(b.type), b); n++; } }
     if (it.voiceId){ const b = await DB.get('clips', it.voiceId).catch(()=>null); if (b){ row.voiceNote = 'clips/' + base + ' voice.' + extFor(b.type); folder.file(base + ' voice.' + extFor(b.type), b); } }
     meta.songs.push(row);
@@ -708,19 +719,19 @@ document.addEventListener('click', async e => {
       s.acts.splice(at, 0, { id: 'a'+uid(), name: cur.name, set: 'Set ' + n }); save(); render(); break; }
     case 'actRemove': { const i = +el.dataset.i; const cur = act(); s.acts.splice(i,1); s.actIdx = Math.max(0, s.acts.indexOf(cur)); if (s.actIdx<0) s.actIdx = 0; save(); render(); break; }
     case 'flip': s.newestFirst = !s.newestFirst; save(); render(); break;
-    case 'undoLast': { const last = s.items.slice().sort((x,y)=>y.ts-x.ts)[0]; if (last) removeItem(last.id); break; }
+    case 'undoLast': { const last = s.items.filter(x=>x.ts).sort((x,y)=>y.ts-x.ts)[0]; if (last) removeItem(last.id); break; }
     case 'note': S.sheet = {type:'note', itemId:id}; renderLayer(); break;
-    case 'saveNote': { const t = document.getElementById('notetext'); if (it && t) it.note = t.value.trim(); S.sheet = null; save(); render(); break; }
+    case 'saveNote': { const t = document.getElementById('notetext'); if (it && t) it.note = t.value.trim(); S.sheet = null; save(); render(); runLyrics(); break; }
     case 'playVoice': if (it && it.voiceId) play(it.voiceId); break;
     case 'play': if (it && it.clipId) play(it.clipId); break;
     case 'pick': addManual(el.dataset.t, S.sheet.itemId); break;
     case 'recordInstead': S.sheet = null; capture(); break;
-    case 'closeSheet': if (e.target === el || el.tagName === 'BUTTON') { if (voice) return; S.sheet = null; S.renaming = null; renderLayer(); } break;
+    case 'closeSheet': if (e.target === el || el.tagName === 'BUTTON') { S.sheet = null; S.renaming = null; renderLayer(); } break;
     case 'toastUndo': { const u = S.toast && S.toast.undo; S.toast = null; if (u) u(); renderLayer(); break; }
     case 'toSetlist': S.view = 'setlist'; render(); break;
     case 'toCapture': S.view = 'capture'; render(); wake(); break;
     case 'endShow': S.sheet = {type:'end'}; renderLayer(); break;
-    case 'confirmEnd': s.ended = true; S.sheet = null; S.view = 'setlist'; save(); if (S.wake) { S.wake.release().catch(()=>{}); } render(); break;
+    case 'confirmEnd': s.ended = true; S.sheet = null; S.view = 'setlist'; save(); if (S.wake) { S.wake.release().catch(()=>{}); } render(); syncWatch().catch(()=>{}); runLyrics(); break;
     case 'item': S.sheet = {type:'item', itemId:id}; renderLayer(); break;
     case 'rename': openPicker(id); break;
     case 'moveUp': case 'moveDown': {
@@ -753,6 +764,21 @@ document.addEventListener('click', async e => {
     case 'spCreate': spCreate(); break;
     case 'spUpdate': spUpdate(); break;
     case 'askReset': S.sheet = {type:'reset'}; renderLayer(); break;
+    case 'flagAct': { const x = actById(el.dataset.act); if (x) { x.incomplete = !x.incomplete; save(); renderView(); if (x.incomplete) toast(actLabel(x) + ' flagged as incomplete. Songs you missed will come from setlist.fm.'); } break; }
+    case 'settings': S.helperMsg = ''; S.pushMsg = ''; S.sheet = {type:'settings'}; renderLayer(); break;
+    case 'saveSettings': readSettingsInputs(); await saveSettings(); S.sheet = null; renderLayer(); toast('Settings saved.'); runLyrics(); autoCheck(); syncWatch().catch(()=>{}); break;
+    case 'testHelper': readSettingsInputs(); await saveSettings(); testHelper(); break;
+    case 'pushOn': readSettingsInputs(); await saveSettings(); S.pushMsg = ''; el.disabled = true; el.textContent = 'Turning on…';
+      try { await pushOn(); toast('Notifications are on.'); } catch (err) { S.pushMsg = err.message || String(err); } renderLayer(); break;
+    case 'pushOff': await pushOff(); renderLayer(); toast('Notifications are off.'); break;
+    case 'toReview': S.view = 'review'; S.rvMsg = ''; render(); reviewCheck(); break;
+    case 'rvCheck': reviewCheck(); break;
+    case 'missed': { const b = el.dataset.k.split('|')[0], an = analyze(s, b), m = an.missed.find(x => x.key === el.dataset.k); if (m) { S.sheet = {type:'missed', key: m.key, title: m.title}; renderLayer(); } break; }
+    case 'missedToggle': { const k = el.dataset.k; s.missedOff = s.missedOff || []; s.missedOff = s.missedOff.includes(k) ? s.missedOff.filter(x => x !== k) : [...s.missedOff, k]; S.sheet = null; save(); render(); break; }
+    case 'useSug': if (it) { it.title = el.dataset.t; it.from = el.dataset.k; it.manual = false; it.picked = true; it.sugOff = false; it.sp = undefined; S.sheet = null; save(); render(); } break;
+    case 'sugOff': if (it) { it.sugOff = true; S.sheet = null; save(); render(); } break;
+    case 'sugOn': if (it) { it.sugOff = false; save(); render(); } break;
+    case 'approve': approve(); break;
     case 'doReset': { for (const i of s.items){ if (i.clipId) DB.del('clips', i.clipId).catch(()=>{}); if (i.voiceId) DB.del('clips', i.voiceId).catch(()=>{}); }
       s.items = []; s.actIdx = 0; s.ended = false; S.sheet = null; S.view = 'capture'; save(); render(); toast('Cleared. Ready for the show.'); break; }
   }
@@ -760,7 +786,8 @@ document.addEventListener('click', async e => {
 document.addEventListener('input', e => { if (e.target.id === 'q' && S.sheet) { S.sheet.q = e.target.value;
   const tmp = document.createElement('div'); tmp.innerHTML = pickerHTML(S.sheet);
   const cur = layer.querySelector('.sh-body'), nb = tmp.querySelector('.sh-body'); if (cur && nb) { cur.innerHTML = nb.innerHTML; cur.scrollTop = 0; } } });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet && !voice) { S.sheet = null; renderLayer(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet) { S.sheet = null; renderLayer(); }
+  if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'notetext') { e.preventDefault(); document.querySelector('[data-a="saveNote"]')?.click(); } });
 window.addEventListener('pagehide', () => { saveNow().catch(()=>{}); });
 
 
@@ -908,11 +935,393 @@ document.addEventListener('change', e => {
   } else if (t.id === 'plname') { const v = t.value.trim(); spCfg().name = v === spDefaultName() ? '' : v; save(); }
 });
 
+/* ---------- settings ---------- */
+// Kept in IndexedDB (kv 'settings') so the service worker can read the helper address for notifications.
+// Tokens stay on this phone; nothing here is in the app's code.
+function saveSettings(){ return DB.put('kv', 'settings', S.settings).catch(() => {}); }
+const helper = () => (S.settings.helperUrl || '').trim().replace(/\/+$/, '');
+function readSettingsInputs(){
+  const g = document.getElementById('set-genius'), h = document.getElementById('set-helper');
+  if (g) { const v = g.value.trim(); if (v !== (S.settings.geniusToken || '')) { S.settings.geniusToken = v; S.lyrAuthBad = false; } }
+  if (h) { let v = h.value.trim(); if (v && !/^https?:\/\//i.test(v)) v = 'https://' + v; S.settings.helperUrl = v; }
+}
+function settingsHTML(){
+  const st = S.settings;
+  return `<div class="scrim" data-a="closeSheet"><div class="sheet tall" data-stop>
+    <div class="sh-head"><div class="sh-title"><div><div class="eyebrow">Setlist Buddy</div><h2>Settings</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div></div>
+    <div class="sh-body" style="display:flex;flex-direction:column;gap:10px">
+      <div class="group eyebrow">Lyrics</div>
+      <label class="note" for="set-genius">Genius access token. Matches the lyrics you type in notes to song titles. It stays on this phone.</label>
+      <input class="field" id="set-genius" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste your Genius token" value="${esc(st.geniusToken || '')}">
+      ${S.lyrAuthBad ? '<p class="note" style="color:var(--rec)">Genius didn’t accept this token.</p>' : ''}
+      <div class="group eyebrow">Helper</div>
+      <label class="note" for="set-helper">Your Cloudflare helper’s address. It checks setlist.fm and sends notifications.</label>
+      <input class="field" id="set-helper" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://setlist-buddy.you.workers.dev" value="${esc(st.helperUrl || '')}">
+      <button class="wide" data-a="testHelper">Test the helper</button>
+      ${S.helperMsg ? `<p class="note"${S.helperBad ? ' style="color:var(--rec)"' : ''} role="status">${esc(S.helperMsg)}</p>` : ''}
+      <div class="group eyebrow">Notifications</div>
+      <p class="note">A notification when someone posts a setlist for a show you logged, and a reminder after 2 days if nobody has.</p>
+      ${st.notify ? `<button class="wide" data-a="pushOff">Notifications on · Turn off</button>` : `<button class="wide" data-a="pushOn">Turn on notifications</button>`}
+      ${S.pushMsg ? `<p class="note" style="color:var(--rec)" role="status">${esc(S.pushMsg)}</p>` : ''}
+    </div>
+    <div class="sh-foot"><button class="wide solid" data-a="saveSettings">Save</button></div>
+  </div></div>`;
+}
+async function testHelper(){
+  const h = helper(); S.helperBad = false;
+  if (!h) { S.helperBad = true; S.helperMsg = 'Paste the helper’s address first.'; renderLayer(); return; }
+  S.helperMsg = 'Checking…'; renderLayer();
+  try {
+    const r = await fetch(h + '/health'); const d = await r.json();
+    if (!d.ok) throw new Error('The helper answered, but not as expected.');
+    const miss = [!d.setlistfmKey && 'the setlist.fm key (secret SETLISTFM_KEY)', !d.storage && 'the KV binding named SB'].filter(Boolean);
+    S.helperBad = !!miss.length;
+    S.helperMsg = miss.length ? 'Connected, but it’s missing ' + miss.join(' and ') + '.' : 'Connected. setlist.fm key and storage are set up.';
+  } catch (e) { S.helperBad = true; S.helperMsg = 'Couldn’t reach the helper. Check the address' + (navigator.onLine ? '.' : ' once you have signal.'); }
+  renderLayer();
+}
+
+/* ---------- notifications (via the helper) ---------- */
+const b64uBytes = s => { const b = atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4)); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+async function pushOn(){
+  const h = helper(); S.pushMsg = '';
+  if (!h) throw new Error('Add the helper’s address first.');
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !window.Notification) throw new Error('This browser can’t show notifications. Install the app to your home screen and try again.');
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted') throw new Error('Notifications are blocked for this site. Allow them in the site settings, then try again.');
+  const reg = await navigator.serviceWorker.ready;
+  const r = await fetch(h + '/vapid'); const d = await r.json();
+  if (!d.publicKey) throw new Error(d.message || 'The helper couldn’t make a notification key. Check its KV binding.');
+  let sub = await reg.pushManager.getSubscription();
+  const want = b64uBytes(d.publicKey);
+  if (sub && sub.options && sub.options.applicationServerKey) {
+    const have = new Uint8Array(sub.options.applicationServerKey);
+    if (have.length !== want.length || have.some((v, i) => v !== want[i])) { await sub.unsubscribe(); sub = null; }
+  }
+  sub = sub || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: want });
+  S.settings.subId = S.settings.subId || ('p' + uid() + uid());
+  S.settings.notify = true; await saveSettings();
+  await syncWatch();
+}
+async function pushOff(){
+  S.settings.notify = false; await saveSettings();
+  try { const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch (e) {}
+  syncWatch(true).catch(() => {});
+}
+// Tells the helper which recent shows to keep an eye on. Sends the whole list each time.
+async function syncWatch(clear){
+  const st = S.settings, h = helper(); if (!h || !st.subId || (!st.notify && !clear)) return;
+  let sub = null; try { const reg = await navigator.serviceWorker.ready; sub = await reg.pushManager.getSubscription(); } catch (e) {}
+  const lo = localDay(new Date(Date.now() - 7 * 864e5)), hi = localDay(new Date(Date.now() + 2 * 864e5));
+  const shows = clear ? [] : S.shows.filter(x => x.date >= lo && x.date <= hi && x.items.length)
+    .map(x => ({ id: x.id, name: nameFor(x), date: x.date, city: x.city || '', acts: [...new Set(x.acts.map(a => a.name))] }));
+  await fetch(h + '/watch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sub: st.subId, subscription: sub ? sub.toJSON() : null, shows }) });
+}
+
+/* ---------- lyrics (Genius) ---------- */
+// Searches Genius with the note you typed and keeps only songs by that band. Only titles are kept; never lyrics.
+const nrm = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\([^()]*cover\)/g, '').replace(/&/g, 'and').replace(/[^a-z0-9]/g, '');
+const words = t => (t || '').trim().split(/\s+/).filter(Boolean).length;
+function canonTitle(band, t){ // use the band's own spelling when the song is in its list
+  const c = cat(band), k = nrm(t);
+  const hit = c && [...c.tour, ...c.extra].find(x => nrm(x) === k);
+  return hit || t;
+}
+async function lyricMatch(it, band){
+  const tok = S.settings.geniusToken, note = (it.note || '').trim();
+  const hits = [];
+  for (const q of [note + ' ' + band, note]) {
+    let r;
+    try { r = await fetch('https://api.genius.com/search?per_page=20&q=' + encodeURIComponent(q) + '&access_token=' + encodeURIComponent(tok)); }
+    catch (e) { const er = new Error('offline'); er.code = 'offline'; throw er; }
+    if (r.status === 401 || r.status === 403) { const er = new Error('auth'); er.code = 'auth'; throw er; }
+    if (!r.ok) continue;
+    const d = await r.json().catch(() => ({}));
+    for (const h of (d.response && d.response.hits) || []) {
+      const res = h.result || {}, artist = (res.primary_artist && res.primary_artist.name || '').replace(/\([^()]*\)/g, '');
+      if (h.type !== 'song' || nrm(artist) !== nrm(band)) continue;
+      const t = canonTitle(band, String(res.title || '').replace(/[​ ]/g, ' ').replace(/\s*\((live|demo|acoustic)[^()]*\)\s*$/i, '').trim());
+      if (t && !hits.some(x => nrm(x) === nrm(t))) hits.push(t);
+    }
+    if (hits.length) break; // the band-name search found it; no need for the second one
+  }
+  it.lyr = { note, band, hits: hits.slice(0, 5), at: Date.now() };
+}
+const lyrPending = (it, band) => !it.title && words(it.note) >= 2 && band && !(it.lyr && it.lyr.note === it.note.trim() && it.lyr.band === band);
+let lyrBusy = false;
+async function runLyrics(){ // matches every note that hasn't been checked yet; runs again whenever signal comes back
+  if (lyrBusy || !S.settings.geniusToken || S.lyrAuthBad || !navigator.onLine) return;
+  lyrBusy = true; let changed = false;
+  try {
+    for (const show of S.shows) for (const it of show.items) {
+      const band = (show.acts.find(a => a.id === it.actId) || {}).name;
+      if (!lyrPending(it, band)) continue;
+      await lyricMatch(it, band); changed = true;
+    }
+  } catch (e) {
+    if (e.code === 'auth') { S.lyrAuthBad = true; toast('Genius didn’t accept your token. Check it in Settings.'); }
+  } finally {
+    lyrBusy = false;
+    if (changed) { save(); renderView(); }
+  }
+}
+window.addEventListener('online', () => { runLyrics(); autoCheck(); });
+
+/* ---------- setlist.fm (via the helper) ---------- */
+function bandNames(sh){ return [...new Set(sh.acts.map(a => a.name))]; }
+function nameFor(sh){ const [y, m, d] = sh.date.split('-').map(Number); return `${sh.acts.length ? sh.acts[sh.acts.length - 1].name : 'Show'} ${m}-${d}-${String(y).slice(-2)}`; }
+async function checkPosted(sh){
+  const h = helper(); if (!h) return { newly: [] };
+  sh.posted = sh.posted || {}; const newly = [];
+  for (const b of bandNames(sh)) {
+    const r = await fetch(`${h}/setlist?artist=${encodeURIComponent(b)}&date=${sh.date}&city=${encodeURIComponent(sh.city || '')}`);
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.message || 'The helper returned ' + r.status);
+    const was = sh.posted[b] && sh.posted[b].found;
+    sh.posted[b] = d.found ? { found: true, url: d.url, sets: d.sets, at: Date.now() } : { found: false, at: Date.now() };
+    if (d.found && !was) newly.push(b);
+  }
+  sh.postedAt = Date.now(); save();
+  return { newly };
+}
+async function reviewCheck(){
+  if (!helper()) return;
+  if (!navigator.onLine) { S.rvMsg = 'No signal. setlist.fm will be checked when you’re back online.'; renderView(); return; }
+  S.rvBusy = true; S.rvMsg = ''; renderView();
+  try { await checkPosted(S.show); } catch (e) { S.rvMsg = 'Couldn’t check setlist.fm: ' + e.message; }
+  S.rvBusy = false; renderView();
+}
+let autoBusy = false;
+async function autoCheck(){ // quietly checks recent shows when the app opens, so a new post shows up even without notifications
+  if (autoBusy || !helper() || !navigator.onLine) return; autoBusy = true;
+  const lo = localDay(new Date(Date.now() - 7 * 864e5)), today = localDay();
+  try {
+    for (const sh of S.shows) {
+      if (sh.date < lo || sh.date > today || !sh.items.length) continue;
+      if (sh.postedAt && Date.now() - sh.postedAt < 3 * 3600e3) continue;
+      if (bandNames(sh).every(b => sh.posted && sh.posted[b] && sh.posted[b].found)) continue;
+      const { newly } = await checkPosted(sh).catch(() => ({ newly: [] }));
+      if (newly.length) toast(`setlist.fm has ${newly.join(' and ')} for ${nameFor(sh)}.`, () => { openShow(sh.id); S.view = 'review'; render(); }, 'Review');
+    }
+  } finally { autoBusy = false; renderView(); }
+}
+
+/* ---------- lining up captures with a setlist ---------- */
+// Reference list: the posted setlist.fm setlist if there is one, otherwise the band's tour order.
+// Songs you named are anchors. Unnamed captures between anchors are matched by your lyric note
+// (when the lyric's song falls in that gap) and then by position. Posted songs nobody logged are "missed".
+function refFor(sh, band){
+  const p = sh.posted && sh.posted[band];
+  if (p && p.found) {
+    const list = []; p.sets.forEach((set, si) => set.songs.forEach(x => list.push({ title: x.coverOf ? `${x.title} (${x.coverOf} cover)` : x.title, set: set.name, si })));
+    return { kind: 'setlist', list, url: p.url };
+  }
+  const c = cat(band);
+  if (c && c.rotate !== false) return { kind: 'tour', list: c.tour.map(t => ({ title: t })) };
+  return { kind: 'none', list: [] };
+}
+function analyze(sh, band){
+  const acts = sh.acts.filter(a => a.name === band), ids = new Set(acts.map(a => a.id));
+  const order = sh.acts.map(a => a.id);
+  const items = sh.items.filter(i => ids.has(i.actId)).sort((a, b) => (order.indexOf(a.actId) - order.indexOf(b.actId)) || (a.pos - b.pos));
+  const ref = refFor(sh, band), R = ref.list, used = R.map(() => false);
+  const incomplete = acts.some(a => a.incomplete);
+  const rows = items.map(it => ({ it, r: -1, kind: it.title ? 'named' : null, title: null, alt: null }));
+  const find = (t, lo, hi) => { const k = nrm(t); for (let j = Math.max(0, lo); j <= Math.min(R.length - 1, hi); j++) if (!used[j] && nrm(R[j].title) === k) return j; return -1; };
+  const lyr = it => (it.lyr && it.lyr.note === (it.note || '').trim() && it.lyr.band === band) ? it.lyr.hits : [];
+  const open = row => !row.it.title && row.r < 0 && !row.it.sugOff;
+  // 1. songs you named
+  let last = -1;
+  for (const row of rows) { if (!row.it.title) continue; let j = find(row.it.title, last + 1, R.length - 1); if (j < 0) j = find(row.it.title, 0, R.length - 1); if (j >= 0) { used[j] = true; row.r = j; last = Math.max(last, j); } }
+  const win = i => { let p = -1, q = R.length; for (let k = i - 1; k >= 0; k--) if (rows[k].r >= 0) { p = rows[k].r; break; } for (let k = i + 1; k < rows.length; k++) if (rows[k].r >= 0) { q = rows[k].r; break; } return [p, q]; };
+  // 2. lyric notes whose song sits in the gap where the capture is
+  for (let pass = 0; pass < 3; pass++) {
+    let changed = false;
+    rows.forEach((row, i) => { if (!open(row)) return; const [p, q] = win(i);
+      for (const t of lyr(row.it)) { const j = find(t, p + 1, q - 1); if (j >= 0) { used[j] = true; row.r = j; row.kind = 'strong'; row.title = R[j].title; changed = true; break; } } });
+    if (!changed) break;
+  }
+  // 3. by position, when the gap between named songs is exactly as long as the run of unnamed captures.
+  // Skipped for tour order when the songs you named didn't follow it (the band shuffled the set).
+  const anchored = rows.filter(r => r.r >= 0 && r.kind === 'named').map(r => r.r);
+  const shuffled = ref.kind === 'tour' && anchored.some((r, k) => k && r < anchored[k - 1]);
+  for (let i = 0; i < rows.length && !shuffled;) {
+    if (rows[i].r >= 0 || rows[i].it.title) { i++; continue; }
+    let j = i; while (j < rows.length && rows[j].r < 0 && !rows[j].it.title) j++;
+    const seg = rows.slice(i, j), k = seg.length, [p, q] = win(i);
+    let start = null;
+    if (R.length) {
+      if (p >= 0 && q < R.length) { if (q - p - 1 === k) start = p + 1; }
+      else if (p < 0 && q < R.length) { if (q - k >= 0) start = q - k; }      // just before the first named song
+      else if (p >= 0 && q >= R.length) { if (p + k < R.length) start = p + 1; } // just after the last one
+      else if (!incomplete && k <= R.length) start = 0;                        // nothing named: assume it started at song 1
+    }
+    if (start !== null) seg.forEach((row, m) => {
+      const r = start + m; if (row.it.sugOff || used[r]) return;
+      const L = lyr(row.it); used[r] = true; row.r = r;
+      if (L.length && !L.some(t => nrm(t) === nrm(R[r].title))) { row.kind = 'conflict'; row.title = L[0]; row.alt = R[r].title; }
+      else { row.kind = L.length ? 'strong' : (ref.kind === 'setlist' ? 'setlist' : 'tour'); row.title = R[r].title; }
+    });
+    i = j;
+  }
+  // 4. a lyric match with nothing else to go on
+  for (const row of rows) if (open(row) && row.r < 0) { const L = lyr(row.it); if (L.length) { row.kind = 'lyrics'; row.title = L[0]; } }
+  // 5. posted songs nobody logged (only for a band you saw)
+  const missed = [];
+  if (ref.kind === 'setlist' && (items.length || incomplete)) R.forEach((x, j) => {
+    if (used[j]) return;
+    const byName = acts.find(a => a.set && nrm(a.set) === nrm(x.set));
+    missed.push({ j, title: x.title, actId: acts.length === 1 ? acts[0].id : (byName || acts[Math.min(x.si || 0, acts.length - 1)]).id, key: band + '|' + nrm(x.title) });
+  });
+  return { band, acts, rows, ref, missed, incomplete };
+}
+function analyzeAll(){ const m = new Map(); for (const b of bandNames(S.show)) { const an = analyze(S.show, b); an.rows.forEach(r => m.set(r.it.id, r)); } return m; }
+function mergedSeq(an){
+  const off = new Set(S.show.missedOff || []);
+  const seq = an.rows.map(row => ({ type: 'row', row, it: row.it, r: row.r, actId: row.it.actId }));
+  for (const m of an.missed) { let at = 0; seq.forEach((e, k) => { if (e.r >= 0 && e.r < m.j) at = k + 1; }); seq.splice(at, 0, { type: 'missed', r: m.j, title: m.title, key: m.key, actId: m.actId, off: off.has(m.key) }); }
+  return seq;
+}
+const FROM = { strong: 'Lyric note + order', setlist: 'setlist.fm order', tour: 'Tour order', lyrics: 'Lyric note', conflict: 'Lyric note', 'setlist.fm': 'setlist.fm' };
+function describe(e, an){ // → { title, sub, pill, cls }
+  const setl = an.ref.kind === 'setlist', ord = setl ? 'setlist.fm order' : 'tour order';
+  if (e.type === 'missed') return { title: e.title, sub: e.off ? 'From setlist.fm · tap to put it back' : 'You missed it · from setlist.fm', pill: e.off ? 'Left out' : 'Added', cls: '' };
+  const it = e.it, row = e.row, when = it.ts ? fmtTime(it.ts) + ' · ' : '';
+  const q = it.note ? ` “${it.note.length > 28 ? it.note.slice(0, 27) + '…' : it.note}”` : '';
+  if (it.title) {
+    const how = it.missed ? 'From setlist.fm' : it.manual ? 'You picked it' : (FROM[it.from] ? 'Matched by ' + FROM[it.from].toLowerCase() : 'Named');
+    if (setl) return row.r >= 0 ? { title: it.title, sub: when + how, pill: 'Confirmed', cls: 'ok' } : { title: it.title, sub: when + 'Not on the posted setlist', pill: 'Check', cls: 'warn' };
+    return { title: it.title, sub: when + how, pill: '', cls: '' };
+  }
+  if (it.sugOff) return { title: null, sub: when + 'Left unnamed', pill: 'Unnamed', cls: 'need' };
+  switch (row.kind) {
+    case 'strong': return { title: row.title, sub: when + 'Your note' + q + ' + ' + ord, pill: 'Confirmed', cls: 'ok' };
+    case 'setlist': return { title: row.title, sub: when + 'From setlist.fm order', pill: 'Likely', cls: '' };
+    case 'lyrics': return { title: row.title, sub: when + 'From your note' + q, pill: 'Likely', cls: '' };
+    case 'tour': return { title: row.title, sub: when + 'Guess from tour order', pill: 'Check', cls: 'warn' };
+    case 'conflict': return { title: row.title, sub: when + `Your note says this · ${ord} says “${row.alt}”`, pill: 'Check', cls: 'warn' };
+  }
+  return { title: null, sub: when + (it.note ? 'No match for' + q : 'No match yet'), pill: 'Unnamed', cls: 'need' };
+}
+// Writes the review into the show: suggested names become titles, missed songs become songs.
+function applyReview(){
+  const s = S.show, final = [];
+  for (const b of bandNames(s)) {
+    const an = analyze(s, b);
+    for (const e of mergedSeq(an)) {
+      if (e.type === 'row') {
+        const it = e.it;
+        if (!it.title && !it.sugOff && e.row.title) { it.title = e.row.title; it.from = e.row.kind; it.manual = false; it.sp = undefined; }
+        final.push(it);
+      } else if (!e.off) {
+        const it = { id: uid(), ts: null, actId: e.actId, pos: 0, title: e.title, manual: false, from: 'setlist.fm', missed: true, note: '', voiceId: null, clipId: null };
+        s.items.push(it); final.push(it);
+      }
+    }
+  }
+  const order = s.acts.map(a => a.id);
+  final.map((it, k) => ({ it, k })).sort((a, b) => (order.indexOf(a.it.actId) - order.indexOf(b.it.actId)) || (a.k - b.k)).forEach((x, i) => { x.it.pos = i; });
+  s.approvedAt = Date.now(); s.ended = true;
+}
+
+/* ---------- review and approve ---------- */
+function reviewStats(){
+  let named = 0, added = 0, check = 0, unnamed = 0;
+  for (const b of bandNames(S.show)) { const an = analyze(S.show, b);
+    for (const e of mergedSeq(an)) { const d = describe(e, an);
+      if (e.type === 'missed') { if (!e.off) added++; continue; }
+      if (!e.it.title && d.title) named++;
+      if (d.pill === 'Check') check++; if (d.pill === 'Unnamed') unnamed++; } }
+  return { named, added, check, unnamed };
+}
+function renderReview(){
+  const s = S.show, h = helper(), bands = bandNames(s);
+  const scroller = app.querySelector('.sl'); const keepScroll = scroller ? scroller.scrollTop : 0;
+  const posted = bands.filter(b => s.posted && s.posted[b] && s.posted[b].found);
+  const notYet = bands.filter(b => s.posted && s.posted[b] && !s.posted[b].found && s.items.some(i => actById(i.actId)?.name === b));
+  let card;
+  if (!h) card = `<div class="card"><p class="note">Checking setlist.fm needs your helper. Without it, suggestions come from your notes and tour order.</p><button class="wide" data-a="settings">${I.gear} Settings</button></div>`;
+  else if (S.rvBusy) card = `<div class="card"><p class="note">Checking setlist.fm…</p></div>`;
+  else card = `<div class="card">
+      ${S.rvMsg ? `<p class="note">${esc(S.rvMsg)}</p>` : ''}
+      ${posted.length ? `<p class="note">On setlist.fm: ${esc(posted.join(', '))}.</p>` : ''}
+      ${notYet.length ? `<p class="note">Not posted yet: ${esc(notYet.join(', '))}. ${posted.length ? '' : 'You can post yours, or approve now and update later.'}</p>` : ''}
+      ${!s.postedAt && !S.rvMsg ? '<p class="note">Not checked yet.</p>' : ''}
+      <div class="row2"><button class="wide" data-a="rvCheck">Check setlist.fm again</button>${notYet.length ? '<button class="wide" data-a="copy">Copy for setlist.fm</button>' : ''}</div>
+    </div>`;
+  let sections = '';
+  for (const b of bands) {
+    const an = analyze(s, b), seq = mergedSeq(an); if (!seq.length) continue;
+    const p = s.posted && s.posted[b];
+    sections += `<h3 class="acth"><span>${esc(b)}</span>${p && p.found ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">setlist.fm ↗</a>` : `<span class="m">${an.ref.kind === 'tour' ? 'no setlist yet · tour order' : 'no setlist yet'}</span>`}</h3>`;
+    let n = 0, lastAct = null;
+    for (const e of seq) {
+      const a = actById(e.actId);
+      if (an.acts.length > 1 && e.actId !== lastAct && a && a.set) sections += `<div class="setlabel">${esc(a.set)}</div>`;
+      lastAct = e.actId;
+      const d = describe(e, an), off = e.type === 'missed' && e.off;
+      if (!off) n++;
+      sections += `<button class="srow${off ? ' off' : ''}" ${e.type === 'row' ? `data-a="item" data-id="${e.it.id}"` : `data-a="missed" data-k="${esc(e.key)}"`}>
+        <span class="mono" style="width:22px;flex:none;font-size:13px;color:var(--muted)">${off ? '–' : n}</span>
+        <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="t">${esc(d.title || 'Unnamed song')}</span><span class="m">${esc(d.sub)}</span></span>
+        ${d.pill ? `<span class="pill ${d.cls}">${esc(d.pill)}</span>` : ''}</button>`;
+    }
+    if (an.incomplete && !(p && p.found)) sections += `<div class="gapline">Incomplete set · some songs weren’t logged</div>`;
+  }
+  const st = reviewStats(), sp = s.sp && s.sp.playlist;
+  const parts = [st.named && `${st.named} name${st.named === 1 ? '' : 's'} filled in`, st.added && `${st.added} missed song${st.added === 1 ? '' : 's'} added`, st.check && `${st.check} to check`, st.unnamed && `${st.unnamed} unnamed (left off the playlist)`].filter(Boolean);
+  app.innerHTML = `<div class="view">
+    <div class="top"><button class="tbtn" data-a="toSetlist">${I.back} Setlist</button><button class="tbtn" data-a="settings" aria-label="Settings">${I.gear}</button></div>
+    <div class="sl">
+      <h1>Review ${esc(nameFor(s))}</h1>
+      <div class="summary">${esc(parts.join(' · ') || 'Everything lines up.')}${st.check || st.unnamed ? ' Tap a song to fix it, or approve as is.' : ''}</div>
+      ${card}
+      ${sections || '<p class="note" style="margin-top:20px">Nothing captured for this show.</p>'}
+    </div>
+    <div class="spfoot"><p class="note spstatus">${s.approvedAt ? 'Approved ' + new Date(s.approvedAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) + '. Approving again updates the setlist' + (sp ? ' and the playlist.' : '.') : ''}</p>
+      <button class="wide solid" data-a="approve">${SPOT.clientId() ? (sp ? 'Approve and update the playlist' : 'Approve and make the playlist') : 'Approve setlist'}</button></div>
+  </div>`;
+  const sc = app.querySelector('.sl'); if (sc) sc.scrollTop = keepScroll;
+}
+function missedHTML(sh){
+  const s = S.show, off = (s.missedOff || []).includes(sh.key);
+  return `<div class="scrim" data-a="closeSheet"><div class="sheet" data-stop><div class="pad">
+    <div class="sh-title"><div><div class="eyebrow">From setlist.fm</div><h2>${esc(sh.title)}</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div>
+    <p>You didn’t log this one, but it’s on the posted setlist.</p>
+    <button class="wide solid" data-a="missedToggle" data-k="${esc(sh.key)}">${off ? 'Put it back' : 'Leave it out'}</button>
+  </div></div></div>`;
+}
+async function approve(){
+  applyReview(); await saveNow().catch(() => {});
+  syncWatch().catch(() => {});
+  if (!SPOT.clientId()) { S.view = 'setlist'; render(); toast('Approved. Connect Spotify from the setlist to make the playlist.'); return; }
+  S.view = 'spotify'; S.spStatus = ''; S.spError = false; render();
+  spAuto();
+}
+async function spAuto(){ // match everything, then create or update the playlist in one go
+  if (!(await spEnsureConnected('auto'))) return;
+  await spMatch(); if (S.spError) return;
+  const ph = spPhase();
+  if (ph === 'create') await spCreate(); else if (ph === 'update') await spUpdate();
+}
+
+// Links into the app: from Spotify sign-in (#spotify-<step>) and from notifications (#review-<show>, #setlist-<show>).
+function route(){
+  const h = location.hash; if (!h) return;
+  history.replaceState(null, '', location.pathname);
+  const sp = h.match(/^#spotify(?:-(\w+))?$/), rv = h.match(/^#(review|setlist)-(.+)$/);
+  if (sp) { S.view = 'spotify'; render(); const k = sp[1];
+    if (k === 'match') spMatch(); else if (k === 'create') spCreate(); else if (k === 'update') spUpdate(); else if (k === 'auto') spAuto(); return; }
+  if (rv) { const x = S.shows.find(v => v.id === decodeURIComponent(rv[2])); if (!x) return;
+    if (x !== S.show) { S.show = x; save(); }
+    S.sheet = null; S.view = rv[1]; S.rvMsg = ''; render();
+    if (rv[1] === 'review') reviewCheck(); }
+}
 /* ---------- boot ---------- */
 (async function boot(){
   // Load every show. Older versions stored one show under 'show'; keep it.
   let shows = null, cur = null, lastDay = null;
-  try { shows = await DB.get('kv','shows'); cur = await DB.get('kv','currentId'); lastDay = await DB.get('kv','lastDay'); } catch(e){}
+  try { shows = await DB.get('kv','shows'); cur = await DB.get('kv','currentId'); lastDay = await DB.get('kv','lastDay'); S.settings = (await DB.get('kv','settings')) || {}; } catch(e){}
   if (!Array.isArray(shows)) { shows = []; try { const old = await DB.get('kv','show'); if (old) shows.push(old); } catch(e){} }
   for (const p of PRESETS()) if (!shows.some(x => x.id === p.id)) shows.push(p);
   S.shows = shows;
@@ -924,10 +1333,11 @@ document.addEventListener('change', e => {
   // A clip that was recording when the app closed can't be finished.
   S.show.items.forEach(i => { if (i.recording) { i.recording = false; if (!i.clipId) i.clipErr = 'Recording cut off'; } });
   if (S.show.ended) S.view = 'setlist';
-  const hm = location.hash.match(/^#spotify(?:-(\w+))?$/);
-  if (hm) { S.view = 'spotify'; history.replaceState(null, '', location.pathname); }
   render(); wake();
-  if (hm && hm[1] === 'match') spMatch(); else if (hm && hm[1] === 'create') spCreate(); else if (hm && hm[1] === 'update') spUpdate();
+  route();
+  window.addEventListener('hashchange', route);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', e => { const d = e.data || {}; if (d.open) { location.hash = d.open; route(); } });
+  runLyrics(); autoCheck(); syncWatch().catch(()=>{});
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
 })();
