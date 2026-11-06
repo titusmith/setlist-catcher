@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0F1012">
 <title>Setlist Buddy</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -126,7 +126,19 @@ textarea,.field{width:100%;padding:12px 14px;border-radius:10px;border:1px solid
 .pill.need{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .box{margin-top:22px;padding:14px 16px;border-radius:12px;background:var(--surface);font-family:var(--mono);font-size:13px;line-height:1.7;white-space:pre-wrap;user-select:text;-webkit-user-select:text}
 .actions{display:flex;flex-direction:column;gap:8px;margin-top:12px}
-.acts-edit .arow{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.acts-edit .arow{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);background:var(--surface)}
+.drow{display:flex;align-items:stretch;border-bottom:1px solid var(--line);background:var(--bg)}
+.drow > .srow{border-bottom:none;flex:1;min-width:0}
+.grip{width:32px;min-height:44px;flex:none;display:flex;align-items:center;justify-content:flex-start;color:var(--faint);touch-action:none;cursor:grab}
+.arow .grip{justify-content:center}
+[data-drag].dragging{position:relative;z-index:5;border-radius:12px;box-shadow:0 10px 28px rgba(0,0,0,.55);background:var(--raised)}
+[data-drag].dragging .grip{color:var(--fg)}
+body.dragging-now{user-select:none;-webkit-user-select:none}
+.emptyact{padding:12px 0;font-size:12px;color:var(--faint);border-bottom:1px solid var(--line)}
+.acts2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.acts2 .wide{width:auto;min-height:44px;font-size:14px}
+.opt .tag.ok{color:var(--ok)}
+.sh-foot .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .acts-edit .field{min-height:48px}
 .mini{width:40px;height:44px;flex:none;border-radius:8px;border:1px solid var(--line);background:transparent;display:flex;align-items:center;justify-content:center}
 .mini[disabled]{opacity:.35}
@@ -269,6 +281,7 @@ const I = {
   search:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
   trash:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
   up:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
+  grip:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>',
   pen:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4"/></svg>',
   flag:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4h11l-1.5 4L16 12H5"/></svg>',
   gear:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
@@ -458,13 +471,13 @@ function renderSetlist(){
   const s = S.show, its = orderedItems(), sug = analyzeAll();
   const unk = its.filter(i=>!i.title).length;
   const groups = s.acts.map(a => {
-    const list = its.filter(i=>i.actId===a.id); if (!list.length && !a.incomplete) return '';
-    return `<h3 class="acth"><span>${esc(actLabel(a))}</span>${flagBtn(a)}</h3>` + list.map((it,i)=>{ const g = !it.title && sug.get(it.id); const gt = g && g.title;
-      return `<button class="srow" data-a="item" data-id="${it.id}">
+    const list = its.filter(i=>i.actId===a.id);
+    return `<h3 class="acth" data-drag-head data-act="${a.id}"><span>${esc(actLabel(a))}</span>${flagBtn(a)}</h3>` + list.map((it,i)=>{ const g = !it.title && sug.get(it.id); const gt = g && g.title;
+      return `<div class="drow" data-drag data-id="${it.id}"><span class="grip" data-grip title="Drag to reorder">${I.grip}</span><button class="srow" data-a="item" data-id="${it.id}">
       <span class="mono" style="width:22px;flex:none;font-size:13px;color:var(--muted)">${i+1}</span>
       <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span class="t${gt?' sug':''}">${esc(it.title || (gt ? gt + '?' : 'Song ' + (i+1) + '?'))}</span>
       <span class="m">${esc([it.ts ? fmtTime(it.ts) : '', it.missed ? 'missed · from setlist.fm' : it.manual?'manually entered':(it.clipId?'clip saved':(it.clipErr||'')), it.note?'“'+it.note+'”':'', it.voiceId?'voice note':''].filter(Boolean).join(' · '))}</span></span>
-      <span class="pill${it.title?'':gt?'':' need'}">${it.title?(it.missed?'Added':it.manual?'You picked':'Named'):(gt?'Suggested':'Name it')}</span></button>`; }).join('')
+      <span class="pill${it.title?'':gt?'':' need'}">${it.title?(it.missed?'Added':it.manual?'You picked':'Named'):(gt?'Suggested':'Name it')}</span></button></div>`; }).join('')
       + (a.incomplete ? `<div class="gapline">Incomplete set · some songs weren’t logged</div>` : '');
   }).join('');
   const st = its.length ? reviewStats() : null;
@@ -477,7 +490,7 @@ function renderSetlist(){
       <h1>${esc(s.venue)} · ${new Date(s.date+'T12:00').toLocaleDateString([], {month:'short', day:'numeric', year:'numeric'})}</h1>
       <div class="summary">${its.length} song${its.length===1?'':'s'}${unk ? ' · ' + unk + ' still to name' : ''} · tap any song to edit</div>
       ${rv}
-      ${groups || '<p class="note" style="margin-top:20px">Nothing captured yet. Go back to the show and tap when a song starts.</p>'}
+      ${its.length ? `<div class="dragbox" data-dragbox="songs">${groups}</div><p class="note" style="margin-top:10px">Hold and drag a song to move it, even to another act.</p>` : '<p class="note" style="margin-top:20px">Nothing captured yet. Go back to the show and tap when a song starts.</p>'}
       <h3>For setlist.fm</h3>
       <div class="box" id="sltext">${esc(setlistText())}</div>
       <div class="actions">
@@ -488,6 +501,7 @@ function renderSetlist(){
         <button class="wide" data-a="askReset" style="margin-top:12px;color:var(--muted)">Clear all captures and start over</button>
       </div>
     </div></div>`;
+  bindDrag(app.querySelector('[data-dragbox="songs"]'), dropSongs);
 }
 function renderLayer(){
   let h = '';
@@ -512,7 +526,8 @@ function renderLayer(){
   layer.innerHTML = h;
   for (const [k, v] of Object.entries(keepFields)) { const f = document.getElementById(k); if (f && f.value !== v) f.value = v; }
   if (noteFocused) { const t = document.getElementById('notetext'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }
-  if (sh && sh.type === 'picker') { const q = document.getElementById('q'); if (q && (sh.focus || keepFocus !== null)) { q.focus(); if (keepFocus!==null) q.setSelectionRange(keepFocus, keepFocus); sh.focus = false; } }
+  if (sh && sh.type === 'bill') bindDrag(layer.querySelector('[data-dragbox="acts"]'), dropActs);
+  if (sh && (sh.type === 'picker' || sh.type === 'item')) { const q = document.getElementById('q'); if (q && (sh.focus || keepFocus !== null)) { q.focus(); if (keepFocus!==null) q.setSelectionRange(keepFocus, keepFocus); sh.focus = false; } }
   if (sh && sh.type === 'note' && sh.focus !== false) { const t = document.getElementById('notetext'); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } sh.focus = false; }
 }
 function pickerHTML(sh){
@@ -549,13 +564,13 @@ function billHTML(){
   return `<div class="scrim" data-a="closeSheet"><div class="sheet tall" data-stop>
     <div class="sh-head"><div class="sh-title"><div><div class="eyebrow">Tonight’s bill · in order</div><h2>Who’s playing</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div></div>
     <div class="sh-body acts-edit">
-      ${s.acts.map((a,i)=>`<div class="arow">
-        <button class="wide${i===s.actIdx?' solid':''}" style="width:auto;flex:1;justify-content:flex-start;padding:0 14px" data-a="goAct" data-i="${i}">${i+1}. ${esc(actLabel(a))}${i===s.actIdx?' · on now':''}</button>
-        <button class="mini" data-a="actUp" data-i="${i}" ${i===0?'disabled':''} aria-label="Move ${esc(a.name)} earlier">${I.up}</button>
-        <button class="mini" data-a="actDown" data-i="${i}" ${i===s.acts.length-1?'disabled':''} aria-label="Move ${esc(a.name)} later">${I.down}</button>
+      <div class="dragbox" data-dragbox="acts">${s.acts.map((a,i)=>`<div class="arow" data-drag data-act="${a.id}">
+        <span class="grip" data-grip title="Drag to reorder">${I.grip}</span>
+        <button class="wide${i===s.actIdx?' solid':''}" style="width:auto;flex:1;min-width:0;justify-content:flex-start;padding:0 14px" data-a="goAct" data-i="${i}">${i+1}. ${esc(actLabel(a))}${i===s.actIdx?' · on now':''}</button>
         <button class="mini" data-a="actRename" data-i="${i}" aria-label="Rename ${esc(a.name)}">Aa</button>
         <button class="mini" data-a="actRemove" data-i="${i}" aria-label="Remove ${esc(a.name)}" ${s.items.some(it=>it.actId===a.id)||s.acts.length===1?'disabled':''}>${I.trash}</button>
-      </div>`).join('')}
+      </div>`).join('')}</div>
+      <p class="note" style="margin-top:10px">Hold and drag to change the order.</p>
       ${S.renaming!=null ? `<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px"><input class="field" id="actname" value="${esc(S.renaming>=0?s.acts[S.renaming].name:'')}" placeholder="Band name" aria-label="Band name">${S.renaming>=0 && s.acts[S.renaming].set ? `<input class="field" id="actset" value="${esc(s.acts[S.renaming].set)}" placeholder="Set name, like Set 2 or Encore" aria-label="Set name">` : ''}<button class="wide solid" data-a="actSave">${S.renaming>=0?'Save':'Add act'}</button></div>` : `<div style="display:flex;flex-direction:column;gap:8px;margin-top:14px"><button class="wide" data-a="actAdd">+ Add an act</button><button class="wide" data-a="actAddSet">+ Add another set for ${esc(act().name)}</button></div>`}
       <p class="note" style="margin-top:14px">${(() => { const have = [...new Set(s.acts.map(a=>a.name))].filter(n => cat(n)); return have.length ? 'Song lists loaded for ' + esc(have.join(', ')) + '. ' : ''; })()}Any act without a list still works; you just type the titles.</p>
     </div>
@@ -563,28 +578,39 @@ function billHTML(){
 }
 function itemHTML(sh){
   const it = S.show.items.find(i=>i.id===sh.itemId); if (!it) return '';
-  const list = orderedItems(), idx = list.indexOf(it);
-  const sameAct = list.filter(i=>i.actId===it.actId), k = sameAct.indexOf(it);
-  const an = analyze(S.show, actById(it.actId)?.name || ''), row = an.rows.find(r => r.it === it), d = row ? describe({ type:'row', row, it }, an) : null;
-  const opts = !it.title && row && !it.sugOff ? [row.title, row.alt].filter(Boolean) : [];
-  return `<div class="scrim" data-a="closeSheet"><div class="sheet" data-stop><div class="pad">
-    <div class="sh-title"><div><div class="eyebrow">${esc(actLabel(actById(it.actId)))} · ${it.ts ? fmtTime(it.ts) : 'from setlist.fm'}</div><h2>${esc(it.title || 'Unnamed song')}</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div>
-    ${it.note ? `<p>“${esc(it.note)}”</p>` : ''}
-    ${d && (opts.length || d.pill === 'Check') ? `<p>${esc(d.sub.split(' · ').filter(x => !/\d:\d\d/.test(x)).join(' · '))}</p>` : ''}
-    ${opts.map((t,i) => `<button class="wide${i===0?' solid':''}" data-a="useSug" data-id="${it.id}" data-t="${esc(t)}" data-k="${i===0?row.kind:(an.ref.kind==='setlist'?'setlist':'tour')}">Use “${esc(t)}”</button>`).join('')}
-    ${opts.length ? `<button class="wide" data-a="sugOff" data-id="${it.id}">Leave it unnamed</button>` : (it.sugOff ? `<button class="wide" data-a="sugOn" data-id="${it.id}">Show suggestions again</button>` : '')}
-    <div class="two">
-      ${it.clipId ? `<button class="wide" data-a="play" data-id="${it.id}">${I.wave} Play clip</button>` : ''}
-      ${it.voiceId ? `<button class="wide" data-a="playVoice" data-id="${it.id}">${I.mic} Voice note</button>` : ''}
-      <button class="wide solid" data-a="rename" data-id="${it.id}">${it.title?'Change song':'Name this song'}</button>
-      <button class="wide" data-a="note" data-id="${it.id}">${it.note||it.voiceId?'Edit note':'Add note'}</button>
-      <button class="wide" data-a="moveUp" data-id="${it.id}" ${k<=0?'disabled style="opacity:.35"':''}>${I.up} Move up</button>
-      <button class="wide" data-a="moveDown" data-id="${it.id}" ${k>=sameAct.length-1?'disabled style="opacity:.35"':''}>${I.down} Move down</button>
+  const a = actById(it.actId), n = orderedItems().filter(i=>i.actId===it.actId).indexOf(it) + 1;
+  const an = analyze(S.show, a ? a.name : ''), row = an.rows.find(r => r.it === it);
+  const setl = an.ref.kind === 'setlist';
+  const why = { strong: 'Your note + ' + (setl ? 'setlist.fm order' : 'tour order'), setlist: 'setlist.fm order', lyrics: 'Your lyric note', tour: 'Tour order guess', conflict: 'Your lyric note' };
+  const sugs = !it.title && row && !it.sugOff && row.title ? [{ t: row.title, k: row.kind, w: why[row.kind] || '' }] : [];
+  if (sugs.length && row.alt) sugs.push({ t: row.alt, k: setl ? 'setlist' : 'tour', w: setl ? 'setlist.fm order' : 'Tour order guess' });
+  const d = pickerData(a, sh.q, it.id), q = (sh.q||'').trim();
+  const exact = q && d.all.some(t=>t.toLowerCase()===q.toLowerCase());
+  const skip = new Set(sugs.map(x => x.t));
+  const cur = t => it.title && it.title === t;
+  const opt = (t, cls, tag, act='pick', k='') => `<button class="opt${cls}" data-a="${act}" data-id="${it.id}" data-t="${esc(t)}"${k?` data-k="${k}"`:''}><span class="t">${esc(t)}</span><span class="tag${cur(t)?' ok':''}">${cur(t) ? 'current' : esc(tag)}</span></button>`;
+  return `<div class="scrim" data-a="closeSheet"><div class="sheet tall" data-stop>
+    <div class="sh-head">
+      <div class="sh-title"><div><div class="eyebrow">Song ${n} · ${esc(actLabel(a))} · ${it.ts ? fmtTime(it.ts) : 'from setlist.fm'}</div><h2>${esc(it.title || 'Which song was it?')}</h2></div><button class="x" data-a="closeSheet" aria-label="Close">${I.x}</button></div>
+      ${it.note ? `<p style="margin:0;color:var(--muted)">“${esc(it.note)}”</p>` : ''}
+      <div class="acts2">
+        ${it.clipId ? `<button class="wide" data-a="play" data-id="${it.id}">${I.wave} Play clip</button>` : ''}
+        ${it.voiceId ? `<button class="wide" data-a="playVoice" data-id="${it.id}">${I.mic} Voice note</button>` : ''}
+        <button class="wide" data-a="note" data-id="${it.id}">${I.pen} ${it.note||it.voiceId?'Edit note':'Add note'}</button>
+      </div>
+      <label class="search">${I.search}<input id="q" type="search" autocomplete="off" placeholder="Search ${esc(a ? a.name : '')} songs" value="${esc(sh.q||'')}" aria-label="Search songs"></label>
     </div>
-    <div class="eyebrow" style="margin-top:4px">Played by</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px">${S.show.acts.map(a=>`<button class="chip${a.id===it.actId?' solid':''}" style="min-height:44px;${a.id===it.actId?'background:var(--fg);color:var(--bg)':''}" data-a="setAct" data-id="${it.id}" data-act="${a.id}">${esc(actLabel(a))}</button>`).join('')}</div>
-    <button class="wide" data-a="remove" data-id="${it.id}" style="color:var(--rec);border-color:var(--rec)">${I.trash} Remove from setlist</button>
-  </div></div></div>`;
+    <div class="sh-body">
+      ${!q && sugs.length ? `<div class="group eyebrow">Suggested</div>` + sugs.map(x => opt(x.t, '', x.w, 'useSug', x.k)).join('') : ''}
+      ${!q && d.likely.length ? `<div class="group eyebrow">Likely songs</div><div class="w" style="font-size:12px;color:var(--muted)">${esc(d.why)}</div>` + d.likely.filter(l => !skip.has(l.t)).map(l => opt(l.t, l.next ? ' next' : '', '')).join('') : ''}
+      ${q && !exact ? `<button class="opt" data-a="pick" data-t="${esc(q)}"><span><span class="t">Use “${esc(q)}”</span><br><span class="w">For a new or unreleased song, or a cover</span></span></button>` : ''}
+      ${d.all.length ? `<div class="group eyebrow">${q?'Matches':'All ' + esc(a.name) + ' songs'}</div>` + d.all.map(t => opt(t, ' sm', d.played.has(t) ? 'played tonight' : '')).join('') : (!cat(a ? a.name : '') && !q ? `<p class="note" style="margin-top:16px">No song list for ${esc(a ? a.name : 'this act')} yet. Type the title above.</p>` : '')}
+    </div>
+    <div class="sh-foot"><div class="two">
+      ${it.title ? `<button class="wide" data-a="clearName" data-id="${it.id}">Clear the name</button>` : (it.sugOff ? `<button class="wide" data-a="sugOn" data-id="${it.id}">Show suggestions</button>` : `<button class="wide" data-a="sugOff" data-id="${it.id}"${sugs.length ? '' : ' disabled style="opacity:.35"'}>Leave unnamed</button>`)}
+      <button class="wide" data-a="remove" data-id="${it.id}" style="color:var(--rec);border-color:var(--rec)">${I.trash} Remove</button>
+    </div></div>
+  </div></div>`;
 }
 function endHTML(){
   return `<div class="scrim" data-a="closeSheet"><div class="sheet" data-stop><div class="pad">
@@ -647,6 +673,78 @@ function bindCap(){
 }
 function openPicker(itemId){ S.sheet = { type:'picker', q:'', itemId: itemId || null, focus: false }; render(); }
 
+/* ---------- hold and drag to reorder ---------- */
+// The grip drags right away; holding anywhere on a row for a moment does too (so scrolling still works).
+let dragEndedAt = 0, dragOn = false;
+document.addEventListener('touchmove', e => { if (dragOn) e.preventDefault(); }, { passive: false });
+function bindDrag(box, onDrop){
+  if (!box) return;
+  const sc = box.closest('.sl, .sh-body') || document.scrollingElement;
+  box.querySelectorAll('[data-drag]').forEach(row => {
+    let hold = null, start = null;
+    const begin = (e) => {
+      dragOn = true; document.body.classList.add('dragging-now'); row.classList.add('dragging');
+      if (navigator.vibrate) navigator.vibrate(12);
+      try { row.setPointerCapture(e.pointerId); } catch (_) {}
+      let anchor = e.clientY, lastY = e.clientY, scrollT = null;
+      const list = () => [...box.querySelectorAll('[data-drag],[data-drag-head]')];
+      const step = (y) => {
+        lastY = y;
+        for (let guard = 0; guard < 4; guard++) {
+          const L = list(), i = L.indexOf(row), r = row.getBoundingClientRect(), mid = r.top + r.height / 2;
+          const nx = L[i + 1], pv = L[i - 1];
+          if (nx && mid > nx.getBoundingClientRect().top + nx.getBoundingClientRect().height / 2) { const b = row.offsetTop; (nx.matches('[data-drag-head]') && nx.nextElementSibling && nx.nextElementSibling.classList.contains('emptyact') ? nx.nextElementSibling : nx).after(row); anchor += row.offsetTop - b; }
+          else if (pv && !(pv.matches('[data-drag-head]') && i - 1 === 0) && mid < pv.getBoundingClientRect().top + pv.getBoundingClientRect().height / 2) { const b = row.offsetTop; pv.before(row); anchor += row.offsetTop - b; }
+          else break;
+          row.style.transform = `translateY(${y - anchor}px)`;
+        }
+        row.style.transform = `translateY(${y - anchor}px)`;
+      };
+      const edge = () => { // scroll when the row is held near the top or bottom
+        const r = sc.getBoundingClientRect(), d = lastY < r.top + 70 ? -10 : lastY > r.bottom - 70 ? 10 : 0;
+        if (d) { const b = sc.scrollTop; sc.scrollTop += d; anchor -= sc.scrollTop - b; step(lastY); }
+      };
+      scrollT = setInterval(edge, 16);
+      const mv = ev => { ev.preventDefault(); step(ev.clientY); };
+      const end = () => {
+        clearInterval(scrollT); dragOn = false; dragEndedAt = Date.now();
+        row.removeEventListener('pointermove', mv); row.removeEventListener('pointerup', end); row.removeEventListener('pointercancel', end);
+        document.body.classList.remove('dragging-now'); row.classList.remove('dragging'); row.style.transform = '';
+        onDrop([...box.querySelectorAll('[data-drag],[data-drag-head]')]);
+      };
+      row.addEventListener('pointermove', mv); row.addEventListener('pointerup', end); row.addEventListener('pointercancel', end);
+    };
+    row.addEventListener('pointerdown', e => {
+      if (e.button) return;
+      if (e.target.closest('[data-grip]')) { e.preventDefault(); begin(e); return; }
+      if (e.target.closest('.mini, .flagbtn')) return;
+      start = { x: e.clientX, y: e.clientY };
+      hold = setTimeout(() => { hold = null; begin(e); }, 420);
+    });
+    row.addEventListener('pointermove', e => { if (hold && start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) { clearTimeout(hold); hold = null; } });
+    const cancel = () => { if (hold) { clearTimeout(hold); hold = null; } };
+    row.addEventListener('pointerup', cancel); row.addEventListener('pointercancel', cancel);
+    row.addEventListener('contextmenu', e => e.preventDefault());
+  });
+}
+function dropSongs(els){ // headers say which act the songs under them belong to
+  const s = S.show; let actId = null; const order = [];
+  for (const el of els) {
+    if (el.hasAttribute('data-drag-head')) { actId = el.dataset.act; continue; }
+    const it = s.items.find(i => i.id === el.dataset.id); if (!it) continue;
+    if (it.actId !== actId) { it.actId = actId; it.sp = undefined; }
+    order.push(it);
+  }
+  const ai = s.acts.map(a => a.id);
+  order.map((it, k) => ({ it, k })).sort((a, b) => (ai.indexOf(a.it.actId) - ai.indexOf(b.it.actId)) || (a.k - b.k)).forEach((x, i) => { x.it.pos = i; });
+  save(); render();
+}
+function dropActs(els){
+  const s = S.show, cur = act();
+  s.acts = els.map(el => s.acts.find(a => a.id === el.dataset.act)).filter(Boolean);
+  s.actIdx = Math.max(0, s.acts.indexOf(cur)); save(); render();
+}
+
 /* ---------- swipe to remove ---------- */
 function bindSwipes(){
   document.querySelectorAll('.row').forEach(row => {
@@ -696,6 +794,7 @@ async function exportClips(){
 
 /* ---------- event delegation ---------- */
 document.addEventListener('click', async e => {
+  if (Date.now() - dragEndedAt < 450) { e.preventDefault(); e.stopPropagation(); return; }
   const el = e.target.closest('[data-a]'); if (!el) return;
   if (el.classList.contains('scrim') && e.target.closest('[data-stop]')) return; // clicks inside a sheet don't close it
   const a = el.dataset.a, id = el.dataset.id, s = S.show;
@@ -705,7 +804,6 @@ document.addEventListener('click', async e => {
     case 'next': if (s.actIdx<s.acts.length-1){ s.actIdx++; save(); render(); } break;
     case 'bill': S.renaming = null; S.sheet = {type:'bill'}; renderLayer(); break;
     case 'goAct': s.actIdx = +el.dataset.i; S.sheet = null; save(); render(); break;
-    case 'actUp': case 'actDown': { const i = +el.dataset.i, j = a==='actUp'?i-1:i+1; const cur = act(); [s.acts[i], s.acts[j]] = [s.acts[j], s.acts[i]]; s.actIdx = s.acts.indexOf(cur); save(); render(); break; }
     case 'actRename': S.renaming = +el.dataset.i; renderLayer(); document.getElementById('actname')?.focus(); break;
     case 'actAdd': S.renaming = -1; renderLayer(); document.getElementById('actname')?.focus(); break;
     case 'actSave': { const v = document.getElementById('actname').value.trim(); if (!v) break;
@@ -725,6 +823,7 @@ document.addEventListener('click', async e => {
     case 'playVoice': if (it && it.voiceId) play(it.voiceId); break;
     case 'play': if (it && it.clipId) play(it.clipId); break;
     case 'pick': addManual(el.dataset.t, S.sheet.itemId); break;
+    case 'clearName': if (it) { it.title = null; it.manual = false; it.from = null; it.sp = undefined; it.sugOff = true; S.sheet = null; save(); render(); } break;
     case 'recordInstead': S.sheet = null; capture(); break;
     case 'closeSheet': if (e.target === el || el.tagName === 'BUTTON') { S.sheet = null; S.renaming = null; renderLayer(); } break;
     case 'toastUndo': { const u = S.toast && S.toast.undo; S.toast = null; if (u) u(); renderLayer(); break; }
@@ -732,12 +831,8 @@ document.addEventListener('click', async e => {
     case 'toCapture': S.view = 'capture'; render(); wake(); break;
     case 'endShow': S.sheet = {type:'end'}; renderLayer(); break;
     case 'confirmEnd': s.ended = true; S.sheet = null; S.view = 'setlist'; save(); if (S.wake) { S.wake.release().catch(()=>{}); } render(); syncWatch().catch(()=>{}); runLyrics(); break;
-    case 'item': S.sheet = {type:'item', itemId:id}; renderLayer(); break;
-    case 'rename': openPicker(id); break;
-    case 'moveUp': case 'moveDown': {
-      const same = orderedItems().filter(i=>i.actId===it.actId); const k = same.indexOf(it), j = a==='moveUp'?k-1:k+1;
-      if (j>=0 && j<same.length){ const o = same[j]; [it.pos, o.pos] = [o.pos, it.pos]; save(); render(); } break; }
-    case 'setAct': if (it){ if (it.actId !== el.dataset.act) it.sp = undefined; it.actId = el.dataset.act; save(); render(); } break;
+    case 'item': S.sheet = {type:'item', itemId:id, q:''}; renderLayer(); break;
+    case 'rename': S.sheet = {type:'item', itemId:id, q:''}; renderLayer(); break;
     case 'remove': S.sheet = null; removeItem(id); break;
     case 'copy': { const txt = setlistText(); try { await navigator.clipboard.writeText(txt); toast('Setlist copied. Paste it into setlist.fm.'); } catch(_){ const r = document.createRange(); r.selectNodeContents(document.getElementById('sltext')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast('Text selected. Use your phone’s Copy.'); } break; }
     case 'exportClips': exportClips(); break;
@@ -784,7 +879,7 @@ document.addEventListener('click', async e => {
   }
 });
 document.addEventListener('input', e => { if (e.target.id === 'q' && S.sheet) { S.sheet.q = e.target.value;
-  const tmp = document.createElement('div'); tmp.innerHTML = pickerHTML(S.sheet);
+  const tmp = document.createElement('div'); tmp.innerHTML = (S.sheet.type === 'item' ? itemHTML : pickerHTML)(S.sheet);
   const cur = layer.querySelector('.sh-body'), nb = tmp.querySelector('.sh-body'); if (cur && nb) { cur.innerHTML = nb.innerHTML; cur.scrollTop = 0; } } });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet) { S.sheet = null; renderLayer(); }
   if (e.key === 'Enter' && !e.shiftKey && e.target.id === 'notetext') { e.preventDefault(); document.querySelector('[data-a="saveNote"]')?.click(); } });
@@ -1247,7 +1342,8 @@ function renderReview(){
       ${posted.length ? `<p class="note">On setlist.fm: ${esc(posted.join(', '))}.</p>` : ''}
       ${notYet.length ? `<p class="note">Not posted yet: ${esc(notYet.join(', '))}. ${posted.length ? '' : 'You can post yours, or approve now and update later.'}</p>` : ''}
       ${!s.postedAt && !S.rvMsg ? '<p class="note">Not checked yet.</p>' : ''}
-      <div class="row2"><button class="wide" data-a="rvCheck">Check setlist.fm again</button>${notYet.length ? '<button class="wide" data-a="copy">Copy for setlist.fm</button>' : ''}</div>
+      ${s.postedAt && !posted.length && !notYet.length ? '<p class="note">Nothing on setlist.fm yet.</p>' : ''}
+      ${notYet.length ? '<div class="row2"><button class="wide" data-a="copy">Copy for setlist.fm</button></div>' : ''}
     </div>`;
   let sections = '';
   for (const b of bands) {
