@@ -911,7 +911,7 @@ function spRowStatus(it){
   if (S.spMatching && S.spMatching.has(it.id)) return `<span class="sps">Matching…</span>`;
   if (it.sp === undefined) return `<span class="sps">Not matched yet</span>`;
   if (it.sp === null) return `<span class="sps miss">Not found on Spotify. Fix the title, then match again.</span>`;
-  const link = `<a href="${esc(it.sp.url)}" target="_blank" rel="noopener">${esc(it.sp.name)} · ${esc(it.sp.artists)}</a>`;
+  const link = `<a href="${esc(it.sp.url)}" target="_blank" rel="noopener">${esc(it.sp.name)} · ${esc(it.sp.artists)}${it.sp.album ? ' · ' + esc(it.sp.album) : ''}</a>`;
   return it.sp.confident ? `<span class="sps found">${link}</span>` : `<span class="sps check">Check this match: ${link}</span>`;
 }
 function renderSpotify(){
@@ -996,7 +996,7 @@ async function spMatch(){
     while (idx < todo.length) {
       const it = todo[idx++];
       const r = await SPOT.findTrack(spQuery(it), c.preferOriginal);
-      it.sp = r.track ? { uri: r.track.uri, name: r.track.name, artists: r.track.artists.map(a => a.name).join(', '), url: r.track.external_urls?.spotify || 'https://open.spotify.com/track/' + r.track.id, confident: r.confident } : null;
+      it.sp = r.track ? { uri: r.track.uri, name: r.track.name, artists: r.track.artists.map(a => a.name).join(', '), album: r.track.album ? r.track.album.name + (r.track.album.album_type === 'single' && r.track.album.total_tracks > 3 ? ' (EP)' : r.track.album.album_type === 'single' ? ' (single)' : '') : '', url: r.track.external_urls?.spotify || 'https://open.spotify.com/track/' + r.track.id, confident: r.confident } : null;
       S.spMatching.delete(it.id); done++; S.spBusy = `Matching ${done} of ${todo.length}…`; save(); spRerender();
     }
   };

@@ -156,6 +156,8 @@
       if (!wanted.includes(w) && name.includes(w)) s -= 6;
     }
     if (item.album?.album_type === 'compilation') s -= 3;
+    // Same song out as a single and on an album: prefer the album version (only breaks near-ties).
+    if (item.album?.album_type === 'single') s -= 2;
     return s;
   }
 
